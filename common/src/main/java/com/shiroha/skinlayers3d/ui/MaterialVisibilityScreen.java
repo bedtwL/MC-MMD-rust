@@ -1,6 +1,6 @@
 package com.shiroha.skinlayers3d.ui;
 
-import com.kAIS.KAIMyEntity.NativeFunc;
+import com.shiroha.skinlayers3d.NativeFunc;
 import com.shiroha.skinlayers3d.renderer.model.MMDModelManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;

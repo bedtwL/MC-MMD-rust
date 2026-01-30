@@ -1,6 +1,6 @@
 //! 纹理加载
 //! 
-//! 与C++版本(KAIMyEntitySaba)完全一致的实现：
+//! 与C++版本完全一致的实现：
 //! - 垂直翻转图像（stbi_set_flip_vertically_on_load(true)）
 //! - 根据原始通道数选择RGB或RGBA格式
 //! - has_alpha基于原始通道数判断

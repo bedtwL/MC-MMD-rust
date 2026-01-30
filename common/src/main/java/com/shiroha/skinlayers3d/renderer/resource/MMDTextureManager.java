@@ -1,6 +1,6 @@
 package com.shiroha.skinlayers3d.renderer.resource;
 
-import com.kAIS.KAIMyEntity.NativeFunc;
+import com.shiroha.skinlayers3d.NativeFunc;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;

@@ -178,28 +178,20 @@ impl IkSolver {
         bone.ik_rotate = Quat::from_euler(glam::EulerRot::XYZ, euler_x, euler_y, euler_z);
     }
     
-    /// 递归更新骨骼的全局变换（对应 C++ MMDNode::UpdateGlobalTransform）
+    /// 更新单个骨骼的全局变换（不递归，避免与 BoneManager 步骤4冲突）
     fn update_single_bone_global(&self, bones: &mut [Bone], idx: usize) {
         if idx >= bones.len() {
             return;
         }
         
-        // 更新当前骨骼
+        // 只更新当前骨骼，不递归更新子骨骼
+        // 子骨骼由 BoneManager::update_transforms 步骤4统一处理
         let parent_idx = bones[idx].parent_index;
         if parent_idx >= 0 && (parent_idx as usize) < bones.len() {
             let parent_global = bones[parent_idx as usize].global_transform;
             bones[idx].global_transform = parent_global * bones[idx].local_transform;
         } else {
             bones[idx].global_transform = bones[idx].local_transform;
-        }
-        
-        // 递归更新所有子骨骼（与 C++ saba 一致）
-        let children: Vec<usize> = (0..bones.len())
-            .filter(|&i| bones[i].parent_index == idx as i32)
-            .collect();
-        
-        for child_idx in children {
-            self.update_single_bone_global(bones, child_idx);
         }
     }
     

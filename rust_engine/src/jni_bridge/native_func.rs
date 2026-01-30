@@ -1,6 +1,6 @@
 //! JNI 原生函数实现
 //!
-//! 对照 C++ 版 com_kAIS_KAIMyEntity_NativeFunc.h 实现所有接口
+//! 对照 C++ 版 NativeFunc.h 实现所有接口
 //! 使用标准 jni 0.21 API
 
 use jni::objects::{JByteBuffer, JClass, JString};
@@ -22,7 +22,7 @@ const VERSION: &str = "Rust-20260125";
 
 /// 获取版本号
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetVersion(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetVersion(
     env: JNIEnv,
     _class: JClass,
 ) -> jstring {
@@ -34,7 +34,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetVersion(
 
 /// 读取字节
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_ReadByte(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_ReadByte(
     _env: JNIEnv,
     _class: JClass,
     data: jlong,
@@ -51,7 +51,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_ReadByte(
 
 /// 复制数据到 ByteBuffer
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_CopyDataToByteBuffer(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_CopyDataToByteBuffer(
     env: JNIEnv,
     _class: JClass,
     buffer: JByteBuffer,
@@ -76,7 +76,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_CopyDataToByteBuffer
 
 /// 加载 PMX 模型
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_LoadModelPMX(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_LoadModelPMX(
     mut env: JNIEnv,
     _class: JClass,
     filename: JString,
@@ -107,7 +107,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_LoadModelPMX(
 
 /// 加载 PMD 模型（暂不支持）
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_LoadModelPMD(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_LoadModelPMD(
     _env: JNIEnv,
     _class: JClass,
     _filename: JString,
@@ -120,7 +120,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_LoadModelPMD(
 
 /// 删除模型
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_DeleteModel(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_DeleteModel(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -131,7 +131,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_DeleteModel(
 
 /// 更新模型
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_UpdateModel(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_UpdateModel(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -151,7 +151,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_UpdateModel(
 
 /// 获取顶点数量
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetVertexCount(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetVertexCount(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -165,7 +165,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetVertexCount(
 
 /// 获取顶点位置数据指针
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetPoss(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetPoss(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -179,7 +179,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetPoss(
 
 /// 获取法线数据指针
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetNormals(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetNormals(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -193,7 +193,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetNormals(
 
 /// 获取 UV 数据指针
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetUVs(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetUVs(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -211,7 +211,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetUVs(
 
 /// 获取索引元素大小
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetIndexElementSize(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetIndexElementSize(
     _env: JNIEnv,
     _class: JClass,
     _model: jlong,
@@ -221,7 +221,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetIndexElementSize(
 
 /// 获取索引数量
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetIndexCount(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetIndexCount(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -235,7 +235,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetIndexCount(
 
 /// 获取索引数据指针
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetIndices(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetIndices(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -253,7 +253,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetIndices(
 
 /// 获取材质数量
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialCount(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialCount(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -267,7 +267,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialCount(
 
 /// 获取材质纹理路径
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialTex(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialTex(
     env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -293,7 +293,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialTex(
 
 /// 获取材质 Sphere 纹理路径
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialSpTex(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialSpTex(
     env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -319,7 +319,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialSpTex(
 
 /// 获取材质 Toon 纹理路径
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialToonTex(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialToonTex(
     env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -350,7 +350,7 @@ thread_local! {
 
 /// 获取材质环境光颜色指针
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialAmbient(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialAmbient(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -380,7 +380,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialAmbient(
 
 /// 获取材质漫反射颜色指针
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialDiffuse(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialDiffuse(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -410,7 +410,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialDiffuse(
 
 /// 获取材质高光颜色指针
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialSpecular(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialSpecular(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -440,7 +440,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialSpecular(
 
 /// 获取材质高光强度
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialSpecularPower(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialSpecularPower(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -461,7 +461,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialSpecularP
 
 /// 获取材质透明度
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialAlpha(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialAlpha(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -479,7 +479,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialAlpha(
 
 /// 获取纹理乘法因子指针
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialTextureMulFactor(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialTextureMulFactor(
     _env: JNIEnv,
     _class: JClass,
     _model: jlong,
@@ -492,7 +492,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialTextureMu
 
 /// 获取纹理加法因子指针
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialTextureAddFactor(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialTextureAddFactor(
     _env: JNIEnv,
     _class: JClass,
     _model: jlong,
@@ -504,7 +504,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialTextureAd
 
 /// 获取 Sphere 纹理模式
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialSpTextureMode(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialSpTextureMode(
     _env: JNIEnv,
     _class: JClass,
     _model: jlong,
@@ -515,7 +515,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialSpTexture
 
 /// 获取 Sphere 纹理乘法因子
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialSpTextureMulFactor(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialSpTextureMulFactor(
     _env: JNIEnv,
     _class: JClass,
     _model: jlong,
@@ -527,7 +527,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialSpTexture
 
 /// 获取 Sphere 纹理加法因子
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialSpTextureAddFactor(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialSpTextureAddFactor(
     _env: JNIEnv,
     _class: JClass,
     _model: jlong,
@@ -539,7 +539,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialSpTexture
 
 /// 获取 Toon 纹理乘法因子
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialToonTextureMulFactor(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialToonTextureMulFactor(
     _env: JNIEnv,
     _class: JClass,
     _model: jlong,
@@ -551,7 +551,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialToonTextu
 
 /// 获取 Toon 纹理加法因子
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialToonTextureAddFactor(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialToonTextureAddFactor(
     _env: JNIEnv,
     _class: JClass,
     _model: jlong,
@@ -563,7 +563,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialToonTextu
 
 /// 获取材质双面标志
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialBothFace(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialBothFace(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -589,7 +589,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialBothFace(
 
 /// 获取子网格数量
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetSubMeshCount(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetSubMeshCount(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -603,7 +603,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetSubMeshCount(
 
 /// 获取子网格材质 ID
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetSubMeshMaterialID(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetSubMeshMaterialID(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -622,7 +622,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetSubMeshMaterialID
 
 /// 获取子网格起始索引
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetSubMeshBeginIndex(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetSubMeshBeginIndex(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -641,7 +641,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetSubMeshBeginIndex
 
 /// 获取子网格索引数量
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetSubMeshVertexCount(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetSubMeshVertexCount(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -665,7 +665,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetSubMeshVertexCoun
 /// 切换动画（支持多动画层）
 /// layer: 动画层ID（0-3），0为基础层，1-3为叠加层
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_ChangeModelAnim(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_ChangeModelAnim(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -686,7 +686,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_ChangeModelAnim(
 
 /// 重置物理（兼容旧接口，等同于 ResetPhysics）
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_ResetModelPhysics(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_ResetModelPhysics(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -700,7 +700,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_ResetModelPhysics(
 
 /// 加载动画
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_LoadAnimation(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_LoadAnimation(
     mut env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -731,7 +731,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_LoadAnimation(
 
 /// 删除动画
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_DeleteAnimation(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_DeleteAnimation(
     _env: JNIEnv,
     _class: JClass,
     anim: jlong,
@@ -742,7 +742,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_DeleteAnimation(
 
 /// 设置头部角度
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SetHeadAngle(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_SetHeadAngle(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -765,7 +765,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SetHeadAngle(
 /// 播放指定层的动画
 /// layer: 动画层ID（0-3）
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_PlayLayer(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_PlayLayer(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -781,7 +781,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_PlayLayer(
 /// 停止指定层的动画
 /// layer: 动画层ID（0-3）
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_StopLayer(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_StopLayer(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -797,7 +797,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_StopLayer(
 /// 暂停指定层的动画
 /// layer: 动画层ID（0-3）
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_PauseLayer(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_PauseLayer(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -813,7 +813,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_PauseLayer(
 /// 恢复指定层的动画
 /// layer: 动画层ID（0-3）
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_ResumeLayer(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_ResumeLayer(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -830,7 +830,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_ResumeLayer(
 /// layer: 动画层ID（0-3）
 /// weight: 权重值（0.0 - 1.0）
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SetLayerWeight(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_SetLayerWeight(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -848,7 +848,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SetLayerWeight(
 /// layer: 动画层ID（0-3）
 /// speed: 速度倍率（0.0+，1.0为正常速度）
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SetLayerSpeed(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_SetLayerSpeed(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -866,7 +866,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SetLayerSpeed(
 /// layer: 动画层ID（0-3）
 /// frame: 目标帧号
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SeekLayer(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_SeekLayer(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -885,7 +885,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SeekLayer(
 /// fadeIn: 淡入时间（秒）
 /// fadeOut: 淡出时间（秒）
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SetLayerFadeTimes(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_SetLayerFadeTimes(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -903,7 +903,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SetLayerFadeTimes(
 /// 获取动画层最大帧数
 /// layer: 动画层ID（0-3）
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetLayerMaxFrame(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetLayerMaxFrame(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -923,7 +923,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetLayerMaxFrame(
 
 /// 加载纹理
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_LoadTexture(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_LoadTexture(
     mut env: JNIEnv,
     _class: JClass,
     filename: JString,
@@ -944,7 +944,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_LoadTexture(
 
 /// 删除纹理
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_DeleteTexture(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_DeleteTexture(
     _env: JNIEnv,
     _class: JClass,
     tex: jlong,
@@ -955,7 +955,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_DeleteTexture(
 
 /// 获取纹理宽度
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetTextureX(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetTextureX(
     _env: JNIEnv,
     _class: JClass,
     tex: jlong,
@@ -966,7 +966,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetTextureX(
 
 /// 获取纹理高度
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetTextureY(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetTextureY(
     _env: JNIEnv,
     _class: JClass,
     tex: jlong,
@@ -977,7 +977,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetTextureY(
 
 /// 获取纹理数据指针
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetTextureData(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetTextureData(
     _env: JNIEnv,
     _class: JClass,
     tex: jlong,
@@ -991,7 +991,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetTextureData(
 
 /// 检查纹理是否有透明通道
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_TextureHasAlpha(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_TextureHasAlpha(
     _env: JNIEnv,
     _class: JClass,
     tex: jlong,
@@ -1015,7 +1015,7 @@ static MATRICES: Lazy<Mutex<Vec<glam::Mat4>>> = Lazy::new(|| Mutex::new(Vec::new
 
 /// 创建矩阵
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_CreateMat(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_CreateMat(
     _env: JNIEnv,
     _class: JClass,
 ) -> jlong {
@@ -1028,7 +1028,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_CreateMat(
 
 /// 删除矩阵
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_DeleteMat(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_DeleteMat(
     _env: JNIEnv,
     _class: JClass,
     _mat: jlong,
@@ -1038,7 +1038,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_DeleteMat(
 
 /// 获取右手矩阵
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetRightHandMat(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetRightHandMat(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -1059,7 +1059,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetRightHandMat(
 
 /// 获取左手矩阵
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetLeftHandMat(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetLeftHandMat(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -1084,7 +1084,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetLeftHandMat(
 
 /// 初始化模型物理系统
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_InitPhysics(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_InitPhysics(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -1101,7 +1101,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_InitPhysics(
 
 /// 重置物理系统
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_ResetPhysics(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_ResetPhysics(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -1115,7 +1115,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_ResetPhysics(
 
 /// 启用/禁用物理
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SetPhysicsEnabled(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_SetPhysicsEnabled(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -1130,7 +1130,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SetPhysicsEnabled(
 
 /// 获取物理是否启用
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_IsPhysicsEnabled(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_IsPhysicsEnabled(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -1147,7 +1147,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_IsPhysicsEnabled(
 
 /// 获取物理是否已初始化
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_HasPhysics(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_HasPhysics(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -1164,7 +1164,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_HasPhysics(
 
 /// 获取物理调试信息（返回 JSON 字符串）
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetPhysicsDebugInfo(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetPhysicsDebugInfo(
     env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -1188,7 +1188,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetPhysicsDebugInfo(
 
 /// 获取材质是否可见
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_IsMaterialVisible(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_IsMaterialVisible(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -1205,7 +1205,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_IsMaterialVisible(
 
 /// 设置材质可见性
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SetMaterialVisible(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_SetMaterialVisible(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -1221,7 +1221,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SetMaterialVisible(
 
 /// 根据材质名称设置可见性（支持部分匹配，返回匹配的材质数量）
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SetMaterialVisibleByName(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_SetMaterialVisibleByName(
     mut env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -1243,7 +1243,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SetMaterialVisibleBy
 
 /// 设置所有材质可见性
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SetAllMaterialsVisible(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_SetAllMaterialsVisible(
     _env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -1258,7 +1258,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_SetAllMaterialsVisib
 
 /// 获取材质名称
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialName(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialName(
     env: JNIEnv,
     _class: JClass,
     model: jlong,
@@ -1280,7 +1280,7 @@ pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialName(
 
 /// 获取所有材质名称（JSON 数组格式）
 #[no_mangle]
-pub extern "system" fn Java_com_kAIS_KAIMyEntity_NativeFunc_GetMaterialNames(
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialNames(
     env: JNIEnv,
     _class: JClass,
     model: jlong,

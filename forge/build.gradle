@@ -135,6 +135,9 @@ dependencies {
     // TouhouLittleMaid - 可选依赖，用于联动
     modCompileOnly("maven.modrinth:touhou-little-maid:1.5.0-forge+mc1.20.1")
     modLocalRuntime("maven.modrinth:touhou-little-maid:1.5.0-forge+mc1.20.1")
+    
+    // Cloth Config API - 配置界面
+    modApi("me.shedaniel.cloth:cloth-config-forge:11.1.136")
 }
 
 // Source JAR 组装（合并 common 源码）

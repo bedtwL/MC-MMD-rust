@@ -1,4 +1,4 @@
-package com.kAIS.KAIMyEntity;
+package com.shiroha.skinlayers3d;
 
 import java.io.File;
 import java.io.IOException;

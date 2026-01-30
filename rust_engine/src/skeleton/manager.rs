@@ -255,10 +255,8 @@ impl BoneManager {
         // 处理附加旋转
         if self.bones[index].is_append_rotate {
             let append_rotate = if is_append_local {
-                // Local 模式：使用 appendNode 的动画旋转
                 self.bones[parent_idx].animation_rotate
             } else {
-                // 非 Local 模式：如果 appendNode 也有 appendNode，使用其 append_rotate
                 if self.bones[parent_idx].append_parent >= 0 {
                     self.bones[parent_idx].append_rotate
                 } else {
@@ -266,14 +264,12 @@ impl BoneManager {
                 }
             };
             
-            // 如果 appendNode 启用了 IK，需要叠加 IK 旋转
             let append_rotate = if self.bones[parent_idx].enable_ik {
                 self.bones[parent_idx].ik_rotate * append_rotate
             } else {
                 append_rotate
             };
             
-            // 使用 slerp 应用权重
             let weighted_rotate = Quat::IDENTITY.slerp(append_rotate, rate);
             self.bones[index].append_rotate = weighted_rotate;
         }
@@ -281,10 +277,8 @@ impl BoneManager {
         // 处理附加平移
         if self.bones[index].is_append_translate {
             let append_translate = if is_append_local {
-                // Local 模式：使用 appendNode 的平移相对于初始位置的偏移
                 self.bones[parent_idx].animation_translate
             } else {
-                // 非 Local 模式：如果 appendNode 也有 appendNode，使用其 append_translate
                 if self.bones[parent_idx].append_parent >= 0 {
                     self.bones[parent_idx].append_translate
                 } else {

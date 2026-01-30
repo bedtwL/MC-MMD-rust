@@ -454,6 +454,15 @@ impl AnimationLayerManager {
             .collect();
 
         if active_layers.is_empty() {
+            // 调试：检查为什么没有活跃层
+            static ONCE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+            if !ONCE.swap(true, std::sync::atomic::Ordering::Relaxed) {
+                for (i, layer) in self.layers.iter().enumerate() {
+                    log::warn!("Layer {}: enabled={}, weight={:.3}, has_anim={}, state={:?}",
+                        i, layer.is_enabled(), layer.effective_weight(), 
+                        layer.animation.is_some(), layer.state);
+                }
+            }
             return;
         }
 

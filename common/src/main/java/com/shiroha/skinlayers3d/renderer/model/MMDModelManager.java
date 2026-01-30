@@ -4,7 +4,7 @@ import com.shiroha.skinlayers3d.SkinLayers3DClient;
 import com.shiroha.skinlayers3d.config.ConfigManager;
 import com.shiroha.skinlayers3d.renderer.animation.MMDAnimManager;
 import com.shiroha.skinlayers3d.renderer.core.IMMDModel;
-import com.kAIS.KAIMyEntity.NativeFunc;
+import com.shiroha.skinlayers3d.NativeFunc;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;

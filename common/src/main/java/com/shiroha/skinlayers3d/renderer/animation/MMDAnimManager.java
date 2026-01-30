@@ -1,6 +1,6 @@
 package com.shiroha.skinlayers3d.renderer.animation;
 
-import com.kAIS.KAIMyEntity.NativeFunc;
+import com.shiroha.skinlayers3d.NativeFunc;
 import com.shiroha.skinlayers3d.renderer.core.IMMDModel;
 import java.io.File;
 import java.util.Collection;

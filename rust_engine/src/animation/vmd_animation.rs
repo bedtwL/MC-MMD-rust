@@ -148,6 +148,8 @@ impl VmdAnimation {
         let mut bone_map: HashMap<usize, BoneController> = HashMap::new();
         let mut morph_map: HashMap<usize, MorphController> = HashMap::new();
         let mut max_frame = 0u32;
+        let mut matched_count = 0usize;
+        let mut unmatched_names: Vec<String> = Vec::new();
         
         // 处理骨骼关键帧
         for (bone_name, keyframe) in &vmd.bone_keyframes {
@@ -155,7 +157,17 @@ impl VmdAnimation {
                 let controller = bone_map.entry(bone_idx).or_insert_with(|| BoneController::new(bone_idx));
                 controller.add_keyframe(keyframe.clone());
                 max_frame = max_frame.max(keyframe.frame);
+                matched_count += 1;
+            } else if !unmatched_names.contains(bone_name) {
+                unmatched_names.push(bone_name.clone());
             }
+        }
+        
+        // 调试日志：显示匹配情况
+        log::info!("VmdAnimation: 匹配 {} 个骨骼关键帧, {} 个骨骼控制器", 
+            matched_count, bone_map.len());
+        if !unmatched_names.is_empty() && unmatched_names.len() <= 10 {
+            log::warn!("VmdAnimation: 未匹配骨骼: {:?}", unmatched_names);
         }
         
         // 处理 Morph 关键帧
@@ -197,6 +209,15 @@ impl VmdAnimation {
     
     /// 带权重评估动画
     pub fn evaluate_with_weight(&self, frame: f32, weight: f32, bone_manager: &mut BoneManager, morph_manager: &mut MorphManager) {
+        // 调试日志（仅首次）
+        static ONCE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+        let should_log = !ONCE.swap(true, std::sync::atomic::Ordering::Relaxed);
+        
+        if should_log {
+            log::info!("VmdAnimation::evaluate: frame={:.1}, weight={:.3}, bone_controllers={}", 
+                frame, weight, self.bone_controllers.len());
+        }
+        
         // 评估骨骼动画
         for controller in &self.bone_controllers {
             let (translation, rotation) = controller.evaluate(frame, weight);

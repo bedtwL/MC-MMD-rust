@@ -24,9 +24,10 @@ public final class SkinLayers3DConfig implements ConfigManager.IConfigProvider {
     private static final Logger logger = LogManager.getLogger();
     private static SkinLayers3DConfig instance;
     
-    private boolean openGLEnableLighting = true;
-    private int modelPoolMaxCount = 100;
-    private boolean isMMDShaderEnabled = false;
+    // 公开配置字段供 ModConfigScreen 使用
+    public static boolean openGLEnableLighting = true;
+    public static int modelPoolMaxCount = 100;
+    public static boolean isMMDShaderEnabled = false;
 
     private SkinLayers3DConfig() {
         loadConfig();
@@ -110,5 +111,22 @@ public final class SkinLayers3DConfig implements ConfigManager.IConfigProvider {
     @Override
     public boolean isMMDShaderEnabled() {
         return isMMDShaderEnabled;
+    }
+    
+    /**
+     * 保存配置到文件
+     */
+    public static void save() {
+        try (BufferedWriter writer = Files.newBufferedWriter(
+                FabricLoader.getInstance().getConfigDir().resolve("3d-skin.properties"))) {
+            Properties properties = new Properties();
+            properties.setProperty("openGLEnableLighting", String.valueOf(openGLEnableLighting));
+            properties.setProperty("modelPoolMaxCount", String.valueOf(modelPoolMaxCount));
+            properties.setProperty("isMMDShaderEnabled", String.valueOf(isMMDShaderEnabled));
+            properties.store(writer, "3D Skin Layers Configuration");
+            logger.info("配置已保存");
+        } catch (IOException e) {
+            logger.error("保存配置失败", e);
+        }
     }
 }

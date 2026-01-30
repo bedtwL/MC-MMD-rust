@@ -1,6 +1,6 @@
 package com.shiroha.skinlayers3d.renderer.render;
 
-import com.kAIS.KAIMyEntity.NativeFunc;
+import com.shiroha.skinlayers3d.NativeFunc;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.shiroha.skinlayers3d.renderer.model.MMDModelManager.ModelWithEntityData;
 import net.minecraft.client.Minecraft;

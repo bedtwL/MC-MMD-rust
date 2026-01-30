@@ -1,20 +1,17 @@
 package com.shiroha.skinlayers3d.forge.register;
 
-import com.shiroha.skinlayers3d.SkinLayers3DClient;
-import com.shiroha.skinlayers3d.forge.config.SkinLayers3DConfig;
+import com.shiroha.skinlayers3d.forge.config.ModConfigScreen;
 import com.shiroha.skinlayers3d.forge.network.SkinLayers3DNetworkPack;
+import com.shiroha.skinlayers3d.maid.MaidActionNetworkHandler;
 import com.shiroha.skinlayers3d.maid.MaidModelNetworkHandler;
-import com.shiroha.skinlayers3d.maid.MaidModelSelectorScreen;
 import com.shiroha.skinlayers3d.renderer.render.SkinLayersRenderFactory;
-import com.shiroha.skinlayers3d.renderer.render.SkinLayersRendererPlayerHelper;
-import com.shiroha.skinlayers3d.renderer.model.MMDModelManager;
 import com.shiroha.skinlayers3d.ui.ActionWheelNetworkHandler;
-import com.shiroha.skinlayers3d.ui.ActionWheelScreen;
+import com.shiroha.skinlayers3d.ui.ConfigWheelScreen;
+import com.shiroha.skinlayers3d.ui.MaidConfigWheelScreen;
 import com.mojang.blaze3d.platform.InputConstants;
 import java.io.File;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.chat.Component;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -24,7 +21,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.client.settings.KeyConflictContext;
-import net.minecraftforge.client.settings.KeyModifier;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.EntityRenderersEvent.RegisterRenderers;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
@@ -42,32 +38,29 @@ import org.lwjgl.glfw.GLFW;
 public class SkinLayers3DRegisterClient {
     static final Logger logger = LogManager.getLogger();
     
-    // 动作轮盘按键 (Alt+Z)
-    static KeyMapping keyActionWheel = new KeyMapping("key.skinlayers3d.action_wheel", KeyConflictContext.IN_GAME, KeyModifier.NONE, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, "key.categories.skinlayers3d");
+    // 主配置轮盘按键 (Alt，可自定义)
+    static KeyMapping keyConfigWheel = new KeyMapping("key.skinlayers3d.config_wheel", 
+        KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, "key.categories.skinlayers3d");
     
-    // 模型选择按键 (Alt+H)
-    static KeyMapping keyModelSelector = new KeyMapping("key.skinlayers3d.model_selector", KeyConflictContext.IN_GAME, KeyModifier.NONE, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H, "key.categories.skinlayers3d");
+    // 女仆配置轮盘按键 (B，对着女仆时生效)
+    static KeyMapping keyMaidConfigWheel = new KeyMapping("key.skinlayers3d.maid_config_wheel", 
+        KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B, "key.categories.skinlayers3d");
     
-    // 功能按键
-    static KeyMapping keyResetPhysics = new KeyMapping("key.skinlayers3d.reset_physics", KeyConflictContext.IN_GAME, KeyModifier.NONE, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, "key.categories.skinlayers3d");
-    static KeyMapping keyReloadModels = new KeyMapping("key.skinlayers3d.reload_models", KeyConflictContext.IN_GAME, KeyModifier.NONE, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_G, "key.categories.skinlayers3d");
-    static KeyMapping keyReloadProperties = new KeyMapping("key.skinlayers3d.reload_properties", KeyConflictContext.IN_GAME, KeyModifier.NONE, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_J, "key.categories.skinlayers3d");
-    static KeyMapping keyChangeProgram = new KeyMapping("key.skinlayers3d.change_program", KeyConflictContext.IN_GAME, KeyModifier.NONE, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_KP_0, "key.categories.skinlayers3d");
-    
-    // 材质可见性控制 (Alt+M)
-    static KeyMapping keyMaterialVisibility = new KeyMapping("key.skinlayers3d.material_visibility", KeyConflictContext.IN_GAME, KeyModifier.NONE, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_M, "key.categories.skinlayers3d");
+    // 追踪按键状态
+    private static boolean configWheelKeyWasDown = false;
+    private static boolean maidConfigWheelKeyWasDown = false;
 
     public static void Register() {
         Minecraft MCinstance = Minecraft.getInstance();
         RegisterRenderers RR = new RegisterRenderers();
         RegisterKeyMappingsEvent RKE = new RegisterKeyMappingsEvent(MCinstance.options);
         
-        // 注册所有按键
-        for (KeyMapping i : new KeyMapping[]{keyActionWheel, keyModelSelector, keyReloadModels, keyResetPhysics, keyReloadProperties, keyMaterialVisibility})
-            RKE.register(i);
+        // 注册按键（仅两个）
+        RKE.register(keyConfigWheel);
+        RKE.register(keyMaidConfigWheel);
         
-        if(SkinLayers3DConfig.isMMDShaderEnabled.get())
-            RKE.register(keyChangeProgram);
+        // 设置模组设置界面工厂
+        ConfigWheelScreen.setModSettingsScreenFactory(() -> ModConfigScreen.create(null));
 
         // 注册动作轮盘网络发送器
         ActionWheelNetworkHandler.setNetworkSender(animId -> {
@@ -96,6 +89,15 @@ public class SkinLayers3DRegisterClient {
                 SkinLayers3DRegisterCommon.channel.sendToServer(new SkinLayers3DNetworkPack(4, player.getUUID(), entityId, modelName));
             }
         });
+        
+        // 注册女仆动作网络发送器
+        MaidActionNetworkHandler.setNetworkSender((entityId, animId) -> {
+            LocalPlayer player = MCinstance.player;
+            if (player != null) {
+                logger.info("发送女仆动作到服务器: 实体={}, 动画={}", entityId, animId);
+                SkinLayers3DRegisterCommon.channel.sendToServer(new SkinLayers3DNetworkPack(5, player.getUUID(), entityId, animId));
+            }
+        });
 
         // 注册实体渲染器
         File[] modelDirs = new File(MCinstance.gameDirectory, "3d-skin").listFiles();
@@ -114,99 +116,40 @@ public class SkinLayers3DRegisterClient {
         }
         logger.info("SkinLayers3D 客户端注册完成");
     }
-
+    
     /**
-     * 按键事件处理
+     * 按键事件处理 - 主配置轮盘和女仆配置轮盘
      */
     @OnlyIn(Dist.CLIENT)
     @SubscribeEvent
-    public static void onKeyPressed(InputEvent.Key event) {
-        Minecraft MCinstance = Minecraft.getInstance();
-        LocalPlayer localPlayer = MCinstance.player;
+    public static void onKeyInput(InputEvent.Key event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
         
-        if (localPlayer == null) return;
-
-        // 动作轮盘 (Alt+Z)
-        if (keyActionWheel.isDown()) {
-            long window = MCinstance.getWindow().getWindow();
-            boolean altPressed = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_ALT) == GLFW.GLFW_PRESS ||
-                               GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_ALT) == GLFW.GLFW_PRESS;
-            
-            if (altPressed) {
-                MCinstance.setScreen(new ActionWheelScreen());
+        // 主配置轮盘
+        if (mc.screen == null || mc.screen instanceof ConfigWheelScreen) {
+            boolean keyDown = keyConfigWheel.isDown();
+            if (keyDown && !configWheelKeyWasDown) {
+                int keyCode = keyConfigWheel.getDefaultKey().getValue();
+                mc.setScreen(new ConfigWheelScreen(keyCode));
             }
+            configWheelKeyWasDown = keyDown;
         }
         
-        // 模型选择 (Alt+H 玩家模型 / H 女仆模型)
-        if (keyModelSelector.isDown()) {
-            long window = MCinstance.getWindow().getWindow();
-            boolean altPressed = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_ALT) == GLFW.GLFW_PRESS ||
-                               GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_ALT) == GLFW.GLFW_PRESS;
-            
-            if (altPressed) {
-                // Alt+H: 打开玩家模型选择界面
-                MCinstance.setScreen(new com.shiroha.skinlayers3d.ui.ModelSelectorScreen());
-            } else {
-                // H: 检测是否看向女仆，打开女仆模型选择界面
-                tryOpenMaidModelSelector(MCinstance);
+        // 女仆配置轮盘
+        if (mc.screen == null || mc.screen instanceof MaidConfigWheelScreen) {
+            boolean keyDown = keyMaidConfigWheel.isDown();
+            if (keyDown && !maidConfigWheelKeyWasDown) {
+                tryOpenMaidConfigWheel(mc);
             }
-        }
-
-        // 重载模型
-        if (keyReloadModels.isDown()) {
-            MMDModelManager.ReloadModel();
-        }
-        
-        // 重置物理
-        if (keyResetPhysics.isDown()) {
-            MMDModelManager.Model m = MMDModelManager.GetModel("EntityPlayer_" + localPlayer.getName().getString());
-            if (m != null) {
-                SkinLayersRendererPlayerHelper.ResetPhysics(localPlayer);
-                SkinLayers3DRegisterCommon.channel.sendToServer(new SkinLayers3DNetworkPack(2, localPlayer.getUUID(), 0));
-            }
-        }
-        
-        // 重载属性
-        if (keyReloadProperties.isDown()) {
-            SkinLayers3DClient.reloadProperties = true;
-        }
-        
-        // MMD着色器切换
-        if (keyChangeProgram.isDown() && SkinLayers3DConfig.isMMDShaderEnabled.get()) {
-            SkinLayers3DClient.usingMMDShader = 1 - SkinLayers3DClient.usingMMDShader;
-            
-            if(SkinLayers3DClient.usingMMDShader == 0)
-                MCinstance.gui.getChat().addMessage(Component.literal("默认着色器"));
-            if(SkinLayers3DClient.usingMMDShader == 1)
-                MCinstance.gui.getChat().addMessage(Component.literal("MMD着色器"));
-        }
-        
-        // 材质可见性 (Alt+M 玩家 / M 女仆)
-        if (keyMaterialVisibility.isDown()) {
-            long window = MCinstance.getWindow().getWindow();
-            boolean altPressed = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_ALT) == GLFW.GLFW_PRESS ||
-                               GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_ALT) == GLFW.GLFW_PRESS;
-            
-            if (altPressed) {
-                // Alt+M: 打开玩家材质可见性界面
-                com.shiroha.skinlayers3d.ui.MaterialVisibilityScreen screen = 
-                    com.shiroha.skinlayers3d.ui.MaterialVisibilityScreen.createForPlayer();
-                if (screen != null) {
-                    MCinstance.setScreen(screen);
-                } else {
-                    MCinstance.gui.getChat().addMessage(Component.literal("§c未找到玩家模型，请先选择一个MMD模型"));
-                }
-            } else {
-                // M: 检测是否看向女仆，打开女仆材质可见性界面
-                tryOpenMaidMaterialVisibility(MCinstance);
-            }
+            maidConfigWheelKeyWasDown = keyDown;
         }
     }
-    
+
     /**
-     * 尝试打开女仆材质可见性界面
+     * 尝试打开女仆配置轮盘
      */
-    private static void tryOpenMaidMaterialVisibility(Minecraft mc) {
+    private static void tryOpenMaidConfigWheel(Minecraft mc) {
         HitResult hitResult = mc.hitResult;
         if (hitResult == null || hitResult.getType() != HitResult.Type.ENTITY) {
             return;
@@ -218,45 +161,9 @@ public class SkinLayers3DRegisterClient {
         String className = target.getClass().getName();
         if (className.contains("EntityMaid") || className.contains("touhoulittlemaid")) {
             String maidName = target.getName().getString();
-            
-            com.shiroha.skinlayers3d.ui.MaterialVisibilityScreen screen = 
-                com.shiroha.skinlayers3d.ui.MaterialVisibilityScreen.createForMaid(target.getUUID(), maidName);
-            if (screen != null) {
-                mc.setScreen(screen);
-                logger.info("打开女仆材质可见性界面: {} (ID: {})", maidName, target.getId());
-            } else {
-                mc.gui.getChat().addMessage(Component.literal("§c未找到女仆模型，请先为女仆选择一个MMD模型"));
-            }
-        }
-    }
-    
-    /**
-     * 尝试打开女仆模型选择界面
-     * 检测玩家是否正在看向女仆实体
-     */
-    private static void tryOpenMaidModelSelector(Minecraft mc) {
-        HitResult hitResult = mc.hitResult;
-        if (hitResult == null || hitResult.getType() != HitResult.Type.ENTITY) {
-            return;
-        }
-        
-        EntityHitResult entityHit = (EntityHitResult) hitResult;
-        Entity target = entityHit.getEntity();
-        
-        // 检查是否是女仆实体（通过类名判断，避免硬依赖）
-        String className = target.getClass().getName();
-        if (className.contains("EntityMaid") || className.contains("touhoulittlemaid")) {
-            // 获取女仆信息
-            String maidName = target.getName().getString();
-            
-            // 打开女仆模型选择界面
-            mc.setScreen(new MaidModelSelectorScreen(
-                target.getUUID(),
-                target.getId(),
-                maidName
-            ));
-            
-            logger.info("打开女仆模型选择界面: {} (ID: {})", maidName, target.getId());
+            int keyCode = keyMaidConfigWheel.getDefaultKey().getValue();
+            mc.setScreen(new MaidConfigWheelScreen(target.getUUID(), target.getId(), maidName, keyCode));
+            logger.info("打开女仆配置轮盘: {} (ID: {})", maidName, target.getId());
         }
     }
 }

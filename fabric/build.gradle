@@ -46,6 +46,11 @@ dependencies {
 		exclude group: "net.fabricmc.fabric-api"
 	}
 	include("dev.architectury:architectury-fabric:9.2.14")
+	
+	// Cloth Config API - 配置界面
+	modApi("me.shedaniel.cloth:cloth-config-fabric:11.1.136") {
+		exclude(group: "net.fabricmc.fabric-api")
+	}
 }
 
 processResources {

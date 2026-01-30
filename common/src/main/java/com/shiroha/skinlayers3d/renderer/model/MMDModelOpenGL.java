@@ -4,7 +4,7 @@ import com.shiroha.skinlayers3d.SkinLayers3DClient;
 import com.shiroha.skinlayers3d.renderer.core.IMMDModel;
 import com.shiroha.skinlayers3d.renderer.resource.MMDTextureManager;
 import com.shiroha.skinlayers3d.renderer.shader.ShaderProvider;
-import com.kAIS.KAIMyEntity.NativeFunc;
+import com.shiroha.skinlayers3d.NativeFunc;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -318,6 +318,25 @@ public class MMDModelOpenGL implements IMMDModel {
 
     void RenderModel(Entity entityIn, float entityYaw, float entityPitch, Vector3f entityTrans, PoseStack deliverStack) {
         Minecraft MCinstance = Minecraft.getInstance();
+        
+        // 采样玩家位置的环境光照
+        MCinstance.level.updateSkyBrightness();
+        int eyeHeight = (int)(entityIn.getEyeY() - entityIn.getBlockY());
+        int blockLight = entityIn.level().getBrightness(LightLayer.BLOCK, entityIn.blockPosition().above(eyeHeight));
+        int skyLight = entityIn.level().getBrightness(LightLayer.SKY, entityIn.blockPosition().above(eyeHeight));
+        float skyDarken = MCinstance.level.getSkyDarken();
+        
+        // 计算综合光照强度 (0.0 ~ 1.0)
+        // 方块光照直接使用，天空光照需要考虑天空亮度衰减
+        float blockLightFactor = blockLight / 15.0f;
+        float skyLightFactor = (skyLight / 15.0f) * ((15.0f - skyDarken) / 15.0f);
+        // 取两者中较亮的作为最终光照，模拟 Minecraft 的光照混合
+        float lightIntensity = Math.max(blockLightFactor, skyLightFactor);
+        
+        // 设置最低亮度阈值，防止完全黑暗（0.1 = 10% 最低亮度）
+        float minBrightness = 0.1f;
+        lightIntensity = minBrightness + lightIntensity * (1.0f - minBrightness);
+        
         light0Direction = new Vector3f(1.0f, 0.75f, 0.0f);
         light1Direction = new Vector3f(-1.0f, 0.75f, 0.0f);
         light0Direction.normalize();
@@ -381,10 +400,9 @@ public class MMDModelOpenGL implements IMMDModel {
             GL46C.glVertexAttribPointer(uv0Location, 2, GL46C.GL_FLOAT, false, 0, 0);
         }
 
-        //UV2
-        MCinstance.level.updateSkyBrightness();
-        int blockBrightness = 16 * entityIn.level().getBrightness(LightLayer.BLOCK, entityIn.blockPosition().above((int)(entityIn.getEyeY()-entityIn.getBlockY())));
-        int skyBrightness = Math.round((15.0f-MCinstance.level.getSkyDarken()) * (entityIn.level().getBrightness(LightLayer.SKY, entityIn.blockPosition().above((int)(entityIn.getEyeY()-entityIn.getBlockY())))/15.0f) * 16);
+        //UV2 - 使用已计算的光照值
+        int blockBrightness = 16 * blockLight;
+        int skyBrightness = Math.round((15.0f - skyDarken) * (skyLight / 15.0f) * 16);
         uv2Buffer.clear();
         for(int i = 0; i < vertexCount; i++){
             uv2Buffer.putInt(blockBrightness);
@@ -407,7 +425,15 @@ public class MMDModelOpenGL implements IMMDModel {
             GL46C.glVertexAttribIPointer(uv1Location, 2, GL46C.GL_INT, 0, 0);
         }
 
-        //color
+        //color - 应用环境光照强度
+        colorBuffer.clear();
+        for(int i = 0; i < vertexCount; i++){
+            colorBuffer.putFloat(lightIntensity); // R
+            colorBuffer.putFloat(lightIntensity); // G
+            colorBuffer.putFloat(lightIntensity); // B
+            colorBuffer.putFloat(1.0f);           // A
+        }
+        colorBuffer.flip();
         if(colorLocation != -1){
             GL46C.glEnableVertexAttribArray(colorLocation);
             GL46C.glBindBuffer(GL46C.GL_ARRAY_BUFFER, colorBufferObject);
@@ -609,8 +635,8 @@ public class MMDModelOpenGL implements IMMDModel {
         K_modelViewLocation = GlStateManager._glGetUniformLocation(shaderProgram, "K_ModelViewMat");
         K_sampler0Location = GlStateManager._glGetUniformLocation(shaderProgram, "K_Sampler0");
         K_sampler2Location = GlStateManager._glGetUniformLocation(shaderProgram, "K_Sampler2");
-        KAIMyLocationV = GlStateManager._glGetUniformLocation(shaderProgram, "KAIMyEntityV");
-        KAIMyLocationF = GlStateManager._glGetUniformLocation(shaderProgram, "KAIMyEntityF");
+        KAIMyLocationV = GlStateManager._glGetUniformLocation(shaderProgram, "MMDShaderV");
+        KAIMyLocationF = GlStateManager._glGetUniformLocation(shaderProgram, "MMDShaderF");
 
         I_positionLocation = GlStateManager._glGetAttribLocation(shaderProgram, "iris_Position");
         I_normalLocation = GlStateManager._glGetAttribLocation(shaderProgram, "iris_Normal");
