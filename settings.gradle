@@ -57,4 +57,3 @@ rootProject.name = '3d-skin'
 // 包含子项目
 include 'common'
 include 'fabric'
-include 'forge'

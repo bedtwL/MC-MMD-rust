@@ -1304,3 +1304,522 @@ pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetMaterialNames
         .map(|s| s.into_raw())
         .unwrap_or(ptr::null_mut())
 }
+
+// ============================================================================
+// GPU 蒙皮相关函数
+// ============================================================================
+
+/// 获取骨骼数量
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetBoneCount(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+) -> jint {
+    let models = MODELS.read().unwrap();
+    models
+        .get(&model)
+        .map(|m| m.lock().unwrap().bone_manager.bone_count() as jint)
+        .unwrap_or(0)
+}
+
+/// 获取蒙皮矩阵数据指针（用于 GPU 蒙皮）
+/// 返回所有骨骼的蒙皮矩阵（skinning matrix = global * inverse_bind）
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetSkinningMatrices(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+) -> jlong {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let model = model_arc.lock().unwrap();
+        let matrices = model.bone_manager.get_skinning_matrices();
+        if !matrices.is_empty() {
+            return matrices.as_ptr() as jlong;
+        }
+    }
+    0
+}
+
+/// 复制蒙皮矩阵到 ByteBuffer（线程安全，用于 GPU 蒙皮）
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_CopySkinningMatricesToBuffer(
+    env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+    buffer: JByteBuffer,
+) -> jint {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let model = model_arc.lock().unwrap();
+        let matrices = model.bone_manager.get_skinning_matrices();
+        if matrices.is_empty() {
+            return 0;
+        }
+        
+        if let Ok(dst) = env.get_direct_buffer_address(&buffer) {
+            let bone_count = matrices.len();
+            
+            // 检查缓冲区容量
+            if let Ok(capacity) = env.get_direct_buffer_capacity(&buffer) {
+                let required = bone_count * 64;
+                if capacity < required {
+                    log::warn!("蒙皮矩阵缓冲区容量不足: {} < {}", capacity, required);
+                    return 0;
+                }
+            }
+            
+            let byte_size = bone_count * 64; // 每个 Mat4 = 16 floats * 4 bytes
+            unsafe {
+                let src = matrices.as_ptr() as *const u8;
+                ptr::copy_nonoverlapping(src, dst, byte_size);
+            }
+            return bone_count as jint;
+        }
+    }
+    0
+}
+
+/// 获取顶点骨骼索引数据指针（ivec4 格式，用于 GPU 蒙皮）
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetBoneIndices(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+) -> jlong {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let model = model_arc.lock().unwrap();
+        return model.get_bone_indices_ptr() as jlong;
+    }
+    0
+}
+
+/// 复制骨骼索引到 ByteBuffer（线程安全）
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_CopyBoneIndicesToBuffer(
+    env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+    buffer: JByteBuffer,
+    vertex_count: jint,
+) -> jint {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let model = model_arc.lock().unwrap();
+        let ptr = model.get_bone_indices_ptr();
+        if ptr.is_null() {
+            return 0;
+        }
+        
+        if let Ok(dst) = env.get_direct_buffer_address(&buffer) {
+            let byte_size = (vertex_count as usize) * 16; // 4 int * 4 bytes
+            unsafe {
+                let src = ptr as *const u8;
+                ptr::copy_nonoverlapping(src, dst, byte_size);
+            }
+            return vertex_count;
+        }
+    }
+    0
+}
+
+/// 获取顶点骨骼权重数据指针（vec4 格式，用于 GPU 蒙皮）
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetBoneWeights(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+) -> jlong {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let model = model_arc.lock().unwrap();
+        return model.get_bone_weights_ptr() as jlong;
+    }
+    0
+}
+
+/// 复制骨骼权重到 ByteBuffer（线程安全）
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_CopyBoneWeightsToBuffer(
+    env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+    buffer: JByteBuffer,
+    vertex_count: jint,
+) -> jint {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let model = model_arc.lock().unwrap();
+        let ptr = model.get_bone_weights_ptr();
+        if ptr.is_null() {
+            return 0;
+        }
+        
+        if let Ok(dst) = env.get_direct_buffer_address(&buffer) {
+            let byte_size = (vertex_count as usize) * 16; // 4 float * 4 bytes
+            unsafe {
+                let src = ptr as *const u8;
+                ptr::copy_nonoverlapping(src, dst, byte_size);
+            }
+            return vertex_count;
+        }
+    }
+    0
+}
+
+/// 获取原始顶点位置数据指针（未蒙皮，用于 GPU 蒙皮）
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetOriginalPositions(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+) -> jlong {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let model = model_arc.lock().unwrap();
+        return model.get_original_positions_ptr() as jlong;
+    }
+    0
+}
+
+/// 复制原始顶点位置到 ByteBuffer（线程安全）
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_CopyOriginalPositionsToBuffer(
+    env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+    buffer: JByteBuffer,
+    vertex_count: jint,
+) -> jint {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let model = model_arc.lock().unwrap();
+        let ptr = model.get_original_positions_ptr();
+        if ptr.is_null() {
+            return 0;
+        }
+        
+        if let Ok(dst) = env.get_direct_buffer_address(&buffer) {
+            let byte_size = (vertex_count as usize) * 12; // 3 float * 4 bytes
+            unsafe {
+                let src = ptr as *const u8;
+                ptr::copy_nonoverlapping(src, dst, byte_size);
+            }
+            return vertex_count;
+        }
+    }
+    0
+}
+
+/// 获取原始法线数据指针（未蒙皮，用于 GPU 蒙皮）
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetOriginalNormals(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+) -> jlong {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let model = model_arc.lock().unwrap();
+        return model.get_original_normals_ptr() as jlong;
+    }
+    0
+}
+
+/// 复制原始法线到 ByteBuffer（线程安全）
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_CopyOriginalNormalsToBuffer(
+    env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+    buffer: JByteBuffer,
+    vertex_count: jint,
+) -> jint {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let model = model_arc.lock().unwrap();
+        let ptr = model.get_original_normals_ptr();
+        if ptr.is_null() {
+            return 0;
+        }
+        
+        if let Ok(dst) = env.get_direct_buffer_address(&buffer) {
+            let byte_size = (vertex_count as usize) * 12; // 3 float * 4 bytes
+            unsafe {
+                let src = ptr as *const u8;
+                ptr::copy_nonoverlapping(src, dst, byte_size);
+            }
+            return vertex_count;
+        }
+    }
+    0
+}
+
+/// 获取 GPU 蒙皮调试信息（返回 JSON 字符串）
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetGpuSkinningDebugInfo<'a>(
+    env: JNIEnv<'a>,
+    _class: JClass,
+    model: jlong,
+) -> jstring {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let model = model_arc.lock().unwrap();
+        
+        let vertex_count = model.vertices.len();
+        let bone_count = model.bone_manager.bone_count();
+        let bone_indices = model.get_bone_indices();
+        let bone_weights = model.get_bone_weights();
+        
+        // 统计信息
+        let mut max_bone_idx = -1i32;
+        let mut invalid_idx_count = 0usize;
+        let mut zero_weight_count = 0usize;
+        let mut bdef1_count = 0usize;
+        let mut bdef2_count = 0usize;
+        let mut bdef4_count = 0usize;
+        
+        for i in 0..vertex_count {
+            let base = i * 4;
+            let mut total_weight = 0.0f32;
+            let mut valid_bones = 0;
+            let mut used_slots = 0;
+            
+            for j in 0..4 {
+                let idx = bone_indices[base + j];
+                let weight = bone_weights[base + j];
+                
+                if idx > max_bone_idx {
+                    max_bone_idx = idx;
+                }
+                if idx >= 0 {
+                    used_slots += 1;
+                    if idx < bone_count as i32 {
+                        valid_bones += 1;
+                        total_weight += weight;
+                    } else {
+                        invalid_idx_count += 1;
+                    }
+                }
+            }
+            
+            if valid_bones > 0 && total_weight < 0.001 {
+                zero_weight_count += 1;
+            }
+            
+            // 统计权重类型
+            match used_slots {
+                1 => bdef1_count += 1,
+                2 => bdef2_count += 1,
+                _ => bdef4_count += 1,
+            }
+        }
+        
+        // 物理信息
+        let physics_enabled = model.is_physics_enabled();
+        let dynamic_bones = model.get_dynamic_bone_count();
+        
+        let info = format!(
+            "顶点:{}, 骨骼:{}, 最大索引:{}, 无效索引:{}, 零权重:{}, BDEF1:{}, BDEF2:{}, BDEF4+:{}, 物理:{}, 动态骨骼:{}",
+            vertex_count, bone_count, max_bone_idx, invalid_idx_count, zero_weight_count,
+            bdef1_count, bdef2_count, bdef4_count, physics_enabled, dynamic_bones
+        );
+        
+        return env.new_string(&info).unwrap().into_raw();
+    }
+    
+    env.new_string("模型未找到").unwrap().into_raw()
+}
+
+/// 仅更新动画（不执行 CPU 蒙皮，用于 GPU 蒙皮模式）
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_UpdateAnimationOnly(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+    delta_time: jfloat,
+) {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let mut model = model_arc.lock().unwrap();
+        model.tick_animation_no_skinning(delta_time);
+    }
+}
+
+/// 初始化 GPU 蒙皮数据
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_InitGpuSkinningData(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+) {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let mut model = model_arc.lock().unwrap();
+        model.init_gpu_skinning_data();
+    }
+}
+
+// ============================================================================
+// GPU Morph 相关函数
+// ============================================================================
+
+/// 初始化 GPU Morph 数据
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_InitGpuMorphData(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+) {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let mut model = model_arc.lock().unwrap();
+        model.init_gpu_morph_data();
+    }
+}
+
+/// 获取顶点 Morph 数量
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetVertexMorphCount(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+) -> jint {
+    let models = MODELS.read().unwrap();
+    models
+        .get(&model)
+        .map(|m| m.lock().unwrap().get_vertex_morph_count() as jint)
+        .unwrap_or(0)
+}
+
+/// 获取 GPU Morph 偏移数据指针
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetGpuMorphOffsets(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+) -> jlong {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let model = model_arc.lock().unwrap();
+        return model.get_gpu_morph_offsets_ptr() as jlong;
+    }
+    0
+}
+
+/// 获取 GPU Morph 偏移数据大小（字节）
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetGpuMorphOffsetsSize(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+) -> jlong {
+    let models = MODELS.read().unwrap();
+    models
+        .get(&model)
+        .map(|m| m.lock().unwrap().get_gpu_morph_offsets_size() as jlong)
+        .unwrap_or(0)
+}
+
+/// 获取 GPU Morph 权重数据指针
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_GetGpuMorphWeights(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+) -> jlong {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let model = model_arc.lock().unwrap();
+        return model.get_gpu_morph_weights_ptr() as jlong;
+    }
+    0
+}
+
+/// 同步 GPU Morph 权重（从 MorphManager 更新到 GPU 缓冲区）
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_SyncGpuMorphWeights(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+) {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let mut model = model_arc.lock().unwrap();
+        model.sync_gpu_morph_weights();
+    }
+}
+
+/// 复制 GPU Morph 偏移数据到 ByteBuffer
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_CopyGpuMorphOffsetsToBuffer(
+    env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+    buffer: JByteBuffer,
+) -> jlong {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let model = model_arc.lock().unwrap();
+        let size = model.get_gpu_morph_offsets_size();
+        if size == 0 {
+            return 0;
+        }
+        
+        if let Ok(dst) = env.get_direct_buffer_address(&buffer) {
+            unsafe {
+                let src = model.get_gpu_morph_offsets_ptr() as *const u8;
+                ptr::copy_nonoverlapping(src, dst, size);
+            }
+            return size as jlong;
+        }
+    }
+    0
+}
+
+/// 复制 GPU Morph 权重数据到 ByteBuffer
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_CopyGpuMorphWeightsToBuffer(
+    env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+    buffer: JByteBuffer,
+) -> jint {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let model = model_arc.lock().unwrap();
+        let morph_count = model.get_vertex_morph_count();
+        if morph_count == 0 {
+            return 0;
+        }
+        
+        let byte_size = morph_count * 4; // float = 4 bytes
+        if let Ok(dst) = env.get_direct_buffer_address(&buffer) {
+            unsafe {
+                let src = model.get_gpu_morph_weights_ptr() as *const u8;
+                ptr::copy_nonoverlapping(src, dst, byte_size);
+            }
+            return morph_count as jint;
+        }
+    }
+    0
+}
+
+/// 获取 GPU Morph 是否已初始化
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_skinlayers3d_NativeFunc_IsGpuMorphInitialized(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+) -> jboolean {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let model = model_arc.lock().unwrap();
+        if model.is_gpu_morph_initialized() {
+            return 1;
+        }
+    }
+    0
+}

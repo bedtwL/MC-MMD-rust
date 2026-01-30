@@ -1,132 +1,143 @@
 package com.shiroha.skinlayers3d.fabric.config;
 
+import com.shiroha.skinlayers3d.config.ConfigData;
 import com.shiroha.skinlayers3d.config.ConfigManager;
+import net.fabricmc.loader.api.FabricLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.Properties;
-import net.fabricmc.loader.api.FabricLoader;
+import java.nio.file.Path;
 
 /**
  * Fabric 配置实现
- * 使用 Properties 文件存储配置
- * 
- * 重构说明：
- * - 实现 ConfigManager.IConfigProvider 接口
- * - 统一默认值（modelPoolMaxCount: 100 -> 100）
- * - 添加异常处理和日志记录
+ * 使用 JSON 格式，配置文件位于 config/skinlayers3d/config.json
  */
 public final class SkinLayers3DConfig implements ConfigManager.IConfigProvider {
     private static final Logger logger = LogManager.getLogger();
     private static SkinLayers3DConfig instance;
+    private static ConfigData data;
+    private static Path configPath;
     
-    // 公开配置字段供 ModConfigScreen 使用
-    public static boolean openGLEnableLighting = true;
-    public static int modelPoolMaxCount = 100;
-    public static boolean isMMDShaderEnabled = false;
-
     private SkinLayers3DConfig() {
-        loadConfig();
+        configPath = FabricLoader.getInstance().getConfigDir().resolve("skinlayers3d");
+        data = ConfigData.load(configPath);
     }
     
     public static void init() {
         instance = new SkinLayers3DConfig();
         ConfigManager.init(instance);
-        logger.info("Fabric 配置系统初始化完成");
+        logger.info("Fabric 配置系统初始化完成 (JSON)");
     }
     
-    /**
-     * 加载配置（带重试机制）
-     */
-    private void loadConfig() {
-        int retryCount = 0;
-        int maxRetries = 3;
-        
-        while (retryCount < maxRetries) {
-            try {
-                tryLoadConfig();
-                logger.info("配置加载成功");
-                return;
-            } catch (Exception e) {
-                retryCount++;
-                logger.warn("配置加载失败 (尝试 {}/{}): {}", retryCount, maxRetries, e.getMessage());
-                
-                if (retryCount >= maxRetries) {
-                    logger.error("配置加载失败，使用默认值", e);
-                    createDefaultConfig();
-                }
-            }
-        }
+    /** 获取配置数据（供 UI 使用） */
+    public static ConfigData getData() {
+        return data;
     }
     
-    /**
-     * 尝试加载配置
-     */
-    private void tryLoadConfig() throws IOException {
-        try (BufferedReader reader = Files.newBufferedReader(
-                FabricLoader.getInstance().getConfigDir().resolve("3d-skin.properties"))) {
-            Properties properties = new Properties();
-            properties.load(reader);
-            
-            openGLEnableLighting = Boolean.parseBoolean(
-                properties.getProperty("openGLEnableLighting", "true"));
-            modelPoolMaxCount = Integer.parseInt(
-                properties.getProperty("modelPoolMaxCount", "100"));
-            isMMDShaderEnabled = Boolean.parseBoolean(
-                properties.getProperty("isMMDShaderEnabled", "false"));
-        }
+    /** 保存配置 */
+    public static void save() {
+        data.save(configPath);
     }
     
-    /**
-     * 创建默认配置文件
-     */
-    private void createDefaultConfig() {
-        try (BufferedWriter writer = Files.newBufferedWriter(
-                FabricLoader.getInstance().getConfigDir().resolve("3d-skin.properties"))) {
-            Properties properties = new Properties();
-            properties.setProperty("openGLEnableLighting", "true");
-            properties.setProperty("modelPoolMaxCount", "100");
-            properties.setProperty("isMMDShaderEnabled", "false");
-            properties.store(writer, "3D Skin Layers Configuration");
-            logger.info("默认配置文件已创建");
-        } catch (IOException e) {
-            logger.error("创建默认配置文件失败", e);
-        }
-    }
+    // ==================== IConfigProvider 实现 ====================
     
     @Override
     public boolean isOpenGLLightingEnabled() {
-        return openGLEnableLighting;
+        return data.openGLEnableLighting;
     }
     
     @Override
     public int getModelPoolMaxCount() {
-        return modelPoolMaxCount;
+        return data.modelPoolMaxCount;
     }
     
     @Override
     public boolean isMMDShaderEnabled() {
-        return isMMDShaderEnabled;
+        return data.mmdShaderEnabled;
     }
     
-    /**
-     * 保存配置到文件
-     */
-    public static void save() {
-        try (BufferedWriter writer = Files.newBufferedWriter(
-                FabricLoader.getInstance().getConfigDir().resolve("3d-skin.properties"))) {
-            Properties properties = new Properties();
-            properties.setProperty("openGLEnableLighting", String.valueOf(openGLEnableLighting));
-            properties.setProperty("modelPoolMaxCount", String.valueOf(modelPoolMaxCount));
-            properties.setProperty("isMMDShaderEnabled", String.valueOf(isMMDShaderEnabled));
-            properties.store(writer, "3D Skin Layers Configuration");
-            logger.info("配置已保存");
-        } catch (IOException e) {
-            logger.error("保存配置失败", e);
-        }
+    @Override
+    public boolean isGpuSkinningEnabled() {
+        return data.gpuSkinningEnabled;
+    }
+    
+    @Override
+    public boolean isGpuMorphEnabled() {
+        return data.gpuMorphEnabled;
+    }
+    
+    @Override
+    public boolean isToonRenderingEnabled() {
+        return data.toonRenderingEnabled;
+    }
+    
+    @Override
+    public int getToonLevels() {
+        return data.toonLevels;
+    }
+    
+    @Override
+    public boolean isToonOutlineEnabled() {
+        return data.toonOutlineEnabled;
+    }
+    
+    @Override
+    public float getToonOutlineWidth() {
+        return data.toonOutlineWidth;
+    }
+    
+    @Override
+    public float getToonRimPower() {
+        return data.toonRimPower;
+    }
+    
+    @Override
+    public float getToonRimIntensity() {
+        return data.toonRimIntensity;
+    }
+    
+    @Override
+    public float getToonShadowR() {
+        return data.toonShadowR;
+    }
+    
+    @Override
+    public float getToonShadowG() {
+        return data.toonShadowG;
+    }
+    
+    @Override
+    public float getToonShadowB() {
+        return data.toonShadowB;
+    }
+    
+    @Override
+    public float getToonSpecularPower() {
+        return data.toonSpecularPower;
+    }
+    
+    @Override
+    public float getToonSpecularIntensity() {
+        return data.toonSpecularIntensity;
+    }
+    
+    @Override
+    public float getToonOutlineR() {
+        return data.toonOutlineR;
+    }
+    
+    @Override
+    public float getToonOutlineG() {
+        return data.toonOutlineG;
+    }
+    
+    @Override
+    public float getToonOutlineB() {
+        return data.toonOutlineB;
+    }
+    
+    @Override
+    public int getMaxBones() {
+        return data.maxBones;
     }
 }

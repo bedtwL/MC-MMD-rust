@@ -122,6 +122,9 @@ public class ModelSelectorScreen extends Screen {
         // 通知服务器模型变更
         ModelSelectorNetworkHandler.sendModelChangeToServer(card.displayName);
         
+        // 触发模型切换事件，1分钟后清理未使用的缓存
+        com.shiroha.skinlayers3d.renderer.model.MMDModelManager.onModelSwitch();
+        
         logger.info("玩家选择模型: {}", card.displayName);
     }
 

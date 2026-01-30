@@ -308,6 +308,180 @@ public class NativeFunc {
      * @return JSON数组字符串
      */
     public native String GetMaterialNames(long model);
+    
+    // ========== GPU 蒙皮相关 ==========
+    
+    /**
+     * 获取骨骼数量
+     * @param model 模型句柄
+     * @return 骨骼数量
+     */
+    public native int GetBoneCount(long model);
+    
+    /**
+     * 获取蒙皮矩阵数据指针（用于 GPU 蒙皮）
+     * @param model 模型句柄
+     * @return 蒙皮矩阵数组指针（每个矩阵 16 个 float）
+     */
+    public native long GetSkinningMatrices(long model);
+    
+    /**
+     * 复制蒙皮矩阵到 ByteBuffer（线程安全）
+     * @param model 模型句柄
+     * @param buffer 目标缓冲区（需要足够大小：骨骼数 * 64 字节）
+     * @return 复制的骨骼数量
+     */
+    public native int CopySkinningMatricesToBuffer(long model, java.nio.ByteBuffer buffer);
+    
+    /**
+     * 获取顶点骨骼索引数据指针（ivec4 格式）
+     * @param model 模型句柄
+     * @return 骨骼索引数组指针（每顶点 4 个 int）
+     */
+    public native long GetBoneIndices(long model);
+    
+    /**
+     * 复制骨骼索引到 ByteBuffer（线程安全）
+     * @param model 模型句柄
+     * @param buffer 目标缓冲区（需要 vertexCount * 16 字节）
+     * @param vertexCount 顶点数量
+     * @return 复制的顶点数量
+     */
+    public native int CopyBoneIndicesToBuffer(long model, java.nio.ByteBuffer buffer, int vertexCount);
+    
+    /**
+     * 获取顶点骨骼权重数据指针（vec4 格式）
+     * @param model 模型句柄
+     * @return 骨骼权重数组指针（每顶点 4 个 float）
+     */
+    public native long GetBoneWeights(long model);
+    
+    /**
+     * 复制骨骼权重到 ByteBuffer（线程安全）
+     * @param model 模型句柄
+     * @param buffer 目标缓冲区（需要 vertexCount * 16 字节）
+     * @param vertexCount 顶点数量
+     * @return 复制的顶点数量
+     */
+    public native int CopyBoneWeightsToBuffer(long model, java.nio.ByteBuffer buffer, int vertexCount);
+    
+    /**
+     * 获取原始顶点位置数据指针（未蒙皮）
+     * @param model 模型句柄
+     * @return 原始位置数组指针
+     */
+    public native long GetOriginalPositions(long model);
+    
+    /**
+     * 复制原始顶点位置到 ByteBuffer（线程安全）
+     * @param model 模型句柄
+     * @param buffer 目标缓冲区（需要 vertexCount * 12 字节）
+     * @param vertexCount 顶点数量
+     * @return 复制的顶点数量
+     */
+    public native int CopyOriginalPositionsToBuffer(long model, java.nio.ByteBuffer buffer, int vertexCount);
+    
+    /**
+     * 获取原始法线数据指针（未蒙皮）
+     * @param model 模型句柄
+     * @return 原始法线数组指针
+     */
+    public native long GetOriginalNormals(long model);
+    
+    /**
+     * 复制原始法线到 ByteBuffer（线程安全）
+     * @param model 模型句柄
+     * @param buffer 目标缓冲区（需要 vertexCount * 12 字节）
+     * @param vertexCount 顶点数量
+     * @return 复制的顶点数量
+     */
+    public native int CopyOriginalNormalsToBuffer(long model, java.nio.ByteBuffer buffer, int vertexCount);
+    
+    /**
+     * 获取 GPU 蒙皮调试信息
+     * @param model 模型句柄
+     * @return 调试信息字符串
+     */
+    public native String GetGpuSkinningDebugInfo(long model);
+    
+    /**
+     * 仅更新动画（不执行 CPU 蒙皮，用于 GPU 蒙皮模式）
+     * @param model 模型句柄
+     * @param deltaTime 时间增量（秒）
+     */
+    public native void UpdateAnimationOnly(long model, float deltaTime);
+    
+    /**
+     * 初始化 GPU 蒙皮数据（模型加载后调用一次）
+     * @param model 模型句柄
+     */
+    public native void InitGpuSkinningData(long model);
+    
+    // ========== GPU Morph 相关 ==========
+    
+    /**
+     * 初始化 GPU Morph 数据
+     * 将稀疏的顶点 Morph 偏移转换为密集格式，供 GPU Compute Shader 使用
+     * @param model 模型句柄
+     */
+    public native void InitGpuMorphData(long model);
+    
+    /**
+     * 获取顶点 Morph 数量
+     * @param model 模型句柄
+     * @return 顶点 Morph 数量
+     */
+    public native int GetVertexMorphCount(long model);
+    
+    /**
+     * 获取 GPU Morph 偏移数据指针（密集格式：morph_count * vertex_count * 3）
+     * @param model 模型句柄
+     * @return 数据指针
+     */
+    public native long GetGpuMorphOffsets(long model);
+    
+    /**
+     * 获取 GPU Morph 偏移数据大小（字节）
+     * @param model 模型句柄
+     * @return 数据大小
+     */
+    public native long GetGpuMorphOffsetsSize(long model);
+    
+    /**
+     * 获取 GPU Morph 权重数据指针
+     * @param model 模型句柄
+     * @return 数据指针
+     */
+    public native long GetGpuMorphWeights(long model);
+    
+    /**
+     * 同步 GPU Morph 权重（从动画系统更新到 GPU 缓冲区）
+     * @param model 模型句柄
+     */
+    public native void SyncGpuMorphWeights(long model);
+    
+    /**
+     * 复制 GPU Morph 偏移数据到 ByteBuffer
+     * @param model 模型句柄
+     * @param buffer 目标缓冲区
+     * @return 复制的字节数
+     */
+    public native long CopyGpuMorphOffsetsToBuffer(long model, java.nio.ByteBuffer buffer);
+    
+    /**
+     * 复制 GPU Morph 权重数据到 ByteBuffer
+     * @param model 模型句柄
+     * @param buffer 目标缓冲区
+     * @return 复制的 Morph 数量
+     */
+    public native int CopyGpuMorphWeightsToBuffer(long model, java.nio.ByteBuffer buffer);
+    
+    /**
+     * 获取 GPU Morph 是否已初始化
+     * @param model 模型句柄
+     * @return 是否已初始化
+     */
+    public native boolean IsGpuMorphInitialized(long model);
 
     enum runtimeUrlRes {
         windows,android_arch64, android_arch64_libc

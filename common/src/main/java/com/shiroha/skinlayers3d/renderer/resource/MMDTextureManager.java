@@ -64,6 +64,33 @@ public class MMDTextureManager {
         return result;
     }
 
+    /**
+     * 清理所有缓存的纹理
+     */
+    public static void Cleanup() {
+        if (textures != null) {
+            for (Texture tex : textures.values()) {
+                if (tex.tex > 0) {
+                    GL46C.glDeleteTextures(tex.tex);
+                }
+            }
+            textures.clear();
+            logger.info("MMDTextureManager 已清理 {} 个纹理", textures.size());
+        }
+    }
+    
+    /**
+     * 删除单个纹理
+     */
+    public static void DeleteTexture(String filename) {
+        if (textures != null) {
+            Texture tex = textures.remove(filename);
+            if (tex != null && tex.tex > 0) {
+                GL46C.glDeleteTextures(tex.tex);
+            }
+        }
+    }
+    
     public static class Texture {
         public int tex;
         public boolean hasAlpha;

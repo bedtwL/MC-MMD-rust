@@ -1,68 +1,144 @@
 package com.shiroha.skinlayers3d.forge.config;
 
+import com.shiroha.skinlayers3d.config.ConfigData;
 import com.shiroha.skinlayers3d.config.ConfigManager;
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.nio.file.Path;
+
 /**
  * Forge 配置实现
- * 使用 ForgeConfigSpec 存储配置
- * 
- * 重构说明：
- * - 实现 ConfigManager.IConfigProvider 接口
- * - 统一默认值（modelPoolMaxCount: 20 -> 100）
- * - 添加配置验证和日志记录
+ * 使用 JSON 格式，配置文件位于 config/skinlayers3d/config.json
+ * 与 Fabric 使用相同的配置格式
  */
 public final class SkinLayers3DConfig implements ConfigManager.IConfigProvider {
     private static final Logger logger = LogManager.getLogger();
     private static SkinLayers3DConfig instance;
+    private static ConfigData data;
+    private static Path configPath;
     
-    public static ForgeConfigSpec config;
-    public static ForgeConfigSpec.BooleanValue openGLEnableLighting;
-    public static ForgeConfigSpec.IntValue modelPoolMaxCount;
-    public static ForgeConfigSpec.BooleanValue isMMDShaderEnabled;
-
-    static {
-        ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
-        builder.push("3d-skin");
-        
-        openGLEnableLighting = builder
-            .comment("启用 OpenGL 光照")
-            .define("openGLEnableLighting", true);
-            
-        modelPoolMaxCount = builder
-            .comment("模型池最大数量")
-            .defineInRange("modelPoolMaxCount", 100, 0, 1000);
-            
-        isMMDShaderEnabled = builder
-            .comment("启用 MMD Shader")
-            .define("isMMDShaderEnabled", false);
-            
-        builder.pop();
-        config = builder.build();
-        
-        logger.info("Forge 配置规格已构建");
+    private SkinLayers3DConfig() {
+        configPath = FMLPaths.CONFIGDIR.get().resolve("skinlayers3d");
+        data = ConfigData.load(configPath);
     }
     
     public static void init() {
         instance = new SkinLayers3DConfig();
         ConfigManager.init(instance);
-        logger.info("Forge 配置系统初始化完成");
+        logger.info("Forge 配置系统初始化完成 (JSON)");
     }
+    
+    /** 获取配置数据（供 UI 使用） */
+    public static ConfigData getData() {
+        return data;
+    }
+    
+    /** 保存配置 */
+    public static void save() {
+        data.save(configPath);
+    }
+    
+    // ==================== IConfigProvider 实现 ====================
     
     @Override
     public boolean isOpenGLLightingEnabled() {
-        return openGLEnableLighting.get();
+        return data.openGLEnableLighting;
     }
     
     @Override
     public int getModelPoolMaxCount() {
-        return modelPoolMaxCount.get();
+        return data.modelPoolMaxCount;
     }
     
     @Override
     public boolean isMMDShaderEnabled() {
-        return isMMDShaderEnabled.get();
+        return data.mmdShaderEnabled;
+    }
+    
+    @Override
+    public boolean isGpuSkinningEnabled() {
+        return data.gpuSkinningEnabled;
+    }
+    
+    @Override
+    public boolean isGpuMorphEnabled() {
+        return data.gpuMorphEnabled;
+    }
+    
+    @Override
+    public boolean isToonRenderingEnabled() {
+        return data.toonRenderingEnabled;
+    }
+    
+    @Override
+    public int getToonLevels() {
+        return data.toonLevels;
+    }
+    
+    @Override
+    public boolean isToonOutlineEnabled() {
+        return data.toonOutlineEnabled;
+    }
+    
+    @Override
+    public float getToonOutlineWidth() {
+        return data.toonOutlineWidth;
+    }
+    
+    @Override
+    public float getToonRimPower() {
+        return data.toonRimPower;
+    }
+    
+    @Override
+    public float getToonRimIntensity() {
+        return data.toonRimIntensity;
+    }
+    
+    @Override
+    public float getToonShadowR() {
+        return data.toonShadowR;
+    }
+    
+    @Override
+    public float getToonShadowG() {
+        return data.toonShadowG;
+    }
+    
+    @Override
+    public float getToonShadowB() {
+        return data.toonShadowB;
+    }
+    
+    @Override
+    public float getToonSpecularPower() {
+        return data.toonSpecularPower;
+    }
+    
+    @Override
+    public float getToonSpecularIntensity() {
+        return data.toonSpecularIntensity;
+    }
+    
+    @Override
+    public float getToonOutlineR() {
+        return data.toonOutlineR;
+    }
+    
+    @Override
+    public float getToonOutlineG() {
+        return data.toonOutlineG;
+    }
+    
+    @Override
+    public float getToonOutlineB() {
+        return data.toonOutlineB;
+    }
+    
+    @Override
+    public int getMaxBones() {
+        return data.maxBones;
     }
 }

@@ -1,5 +1,6 @@
 package com.shiroha.skinlayers3d.fabric.config;
 
+import com.shiroha.skinlayers3d.config.ConfigData;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
@@ -16,6 +17,8 @@ public class ModConfigScreen {
      * 创建模组设置界面
      */
     public static Screen create(Screen parent) {
+        ConfigData data = SkinLayers3DConfig.getData();
+        
         ConfigBuilder builder = ConfigBuilder.create()
             .setParentScreen(parent)
             .setTitle(Component.translatable("gui.skinlayers3d.mod_settings.title"));
@@ -29,19 +32,19 @@ public class ModConfigScreen {
         renderCategory.addEntry(entryBuilder
             .startBooleanToggle(
                 Component.translatable("gui.skinlayers3d.mod_settings.opengl_lighting"),
-                SkinLayers3DConfig.openGLEnableLighting)
+                data.openGLEnableLighting)
             .setDefaultValue(true)
             .setTooltip(Component.translatable("gui.skinlayers3d.mod_settings.opengl_lighting.tooltip"))
-            .setSaveConsumer(value -> SkinLayers3DConfig.openGLEnableLighting = value)
+            .setSaveConsumer(value -> data.openGLEnableLighting = value)
             .build());
         
         renderCategory.addEntry(entryBuilder
             .startBooleanToggle(
                 Component.translatable("gui.skinlayers3d.mod_settings.mmd_shader"),
-                SkinLayers3DConfig.isMMDShaderEnabled)
+                data.mmdShaderEnabled)
             .setDefaultValue(false)
             .setTooltip(Component.translatable("gui.skinlayers3d.mod_settings.mmd_shader.tooltip"))
-            .setSaveConsumer(value -> SkinLayers3DConfig.isMMDShaderEnabled = value)
+            .setSaveConsumer(value -> data.mmdShaderEnabled = value)
             .build());
         
         // 性能设置分类
@@ -51,10 +54,167 @@ public class ModConfigScreen {
         performanceCategory.addEntry(entryBuilder
             .startIntSlider(
                 Component.translatable("gui.skinlayers3d.mod_settings.model_pool_max"),
-                SkinLayers3DConfig.modelPoolMaxCount, 10, 500)
+                data.modelPoolMaxCount, 10, 500)
             .setDefaultValue(100)
             .setTooltip(Component.translatable("gui.skinlayers3d.mod_settings.model_pool_max.tooltip"))
-            .setSaveConsumer(value -> SkinLayers3DConfig.modelPoolMaxCount = value)
+            .setSaveConsumer(value -> data.modelPoolMaxCount = value)
+            .build());
+        
+        performanceCategory.addEntry(entryBuilder
+            .startBooleanToggle(
+                Component.translatable("gui.skinlayers3d.mod_settings.gpu_skinning"),
+                data.gpuSkinningEnabled)
+            .setDefaultValue(false)
+            .setTooltip(Component.translatable("gui.skinlayers3d.mod_settings.gpu_skinning.tooltip"))
+            .setSaveConsumer(value -> data.gpuSkinningEnabled = value)
+            .build());
+        
+        performanceCategory.addEntry(entryBuilder
+            .startBooleanToggle(
+                Component.translatable("gui.skinlayers3d.mod_settings.gpu_morph"),
+                data.gpuMorphEnabled)
+            .setDefaultValue(false)
+            .setTooltip(Component.translatable("gui.skinlayers3d.mod_settings.gpu_morph.tooltip"))
+            .setSaveConsumer(value -> data.gpuMorphEnabled = value)
+            .build());
+        
+        performanceCategory.addEntry(entryBuilder
+            .startIntSlider(
+                Component.translatable("gui.skinlayers3d.mod_settings.max_bones"),
+                data.maxBones, 512, 4096)
+            .setDefaultValue(2048)
+            .setTooltip(Component.translatable("gui.skinlayers3d.mod_settings.max_bones.tooltip"))
+            .setSaveConsumer(value -> data.maxBones = value)
+            .build());
+        
+        // Toon 渲染设置分类（3渲2）
+        ConfigCategory toonCategory = builder.getOrCreateCategory(
+            Component.translatable("gui.skinlayers3d.mod_settings.category.toon"));
+        
+        toonCategory.addEntry(entryBuilder
+            .startBooleanToggle(
+                Component.translatable("gui.skinlayers3d.mod_settings.toon_enabled"),
+                data.toonRenderingEnabled)
+            .setDefaultValue(false)
+            .setTooltip(Component.translatable("gui.skinlayers3d.mod_settings.toon_enabled.tooltip"))
+            .setSaveConsumer(value -> data.toonRenderingEnabled = value)
+            .build());
+        
+        toonCategory.addEntry(entryBuilder
+            .startIntSlider(
+                Component.translatable("gui.skinlayers3d.mod_settings.toon_levels"),
+                data.toonLevels, 2, 5)
+            .setDefaultValue(3)
+            .setTooltip(Component.translatable("gui.skinlayers3d.mod_settings.toon_levels.tooltip"))
+            .setSaveConsumer(value -> data.toonLevels = value)
+            .build());
+        
+        // 边缘光设置
+        toonCategory.addEntry(entryBuilder
+            .startIntSlider(
+                Component.translatable("gui.skinlayers3d.mod_settings.toon_rim_power"),
+                (int)(data.toonRimPower * 10), 10, 100)
+            .setDefaultValue(30)
+            .setTooltip(Component.translatable("gui.skinlayers3d.mod_settings.toon_rim_power.tooltip"))
+            .setSaveConsumer(value -> data.toonRimPower = value / 10.0f)
+            .build());
+        
+        toonCategory.addEntry(entryBuilder
+            .startIntSlider(
+                Component.translatable("gui.skinlayers3d.mod_settings.toon_rim_intensity"),
+                (int)(data.toonRimIntensity * 100), 0, 100)
+            .setDefaultValue(30)
+            .setTooltip(Component.translatable("gui.skinlayers3d.mod_settings.toon_rim_intensity.tooltip"))
+            .setSaveConsumer(value -> data.toonRimIntensity = value / 100.0f)
+            .build());
+        
+        // 阴影色设置
+        toonCategory.addEntry(entryBuilder
+            .startIntSlider(
+                Component.translatable("gui.skinlayers3d.mod_settings.toon_shadow_r"),
+                (int)(data.toonShadowR * 100), 0, 100)
+            .setDefaultValue(60)
+            .setTooltip(Component.translatable("gui.skinlayers3d.mod_settings.toon_shadow.tooltip"))
+            .setSaveConsumer(value -> data.toonShadowR = value / 100.0f)
+            .build());
+        
+        toonCategory.addEntry(entryBuilder
+            .startIntSlider(
+                Component.translatable("gui.skinlayers3d.mod_settings.toon_shadow_g"),
+                (int)(data.toonShadowG * 100), 0, 100)
+            .setDefaultValue(50)
+            .setSaveConsumer(value -> data.toonShadowG = value / 100.0f)
+            .build());
+        
+        toonCategory.addEntry(entryBuilder
+            .startIntSlider(
+                Component.translatable("gui.skinlayers3d.mod_settings.toon_shadow_b"),
+                (int)(data.toonShadowB * 100), 0, 100)
+            .setDefaultValue(70)
+            .setSaveConsumer(value -> data.toonShadowB = value / 100.0f)
+            .build());
+        
+        // 高光设置
+        toonCategory.addEntry(entryBuilder
+            .startIntSlider(
+                Component.translatable("gui.skinlayers3d.mod_settings.toon_specular_power"),
+                (int)data.toonSpecularPower, 1, 128)
+            .setDefaultValue(32)
+            .setTooltip(Component.translatable("gui.skinlayers3d.mod_settings.toon_specular_power.tooltip"))
+            .setSaveConsumer(value -> data.toonSpecularPower = value)
+            .build());
+        
+        toonCategory.addEntry(entryBuilder
+            .startIntSlider(
+                Component.translatable("gui.skinlayers3d.mod_settings.toon_specular_intensity"),
+                (int)(data.toonSpecularIntensity * 100), 0, 100)
+            .setDefaultValue(50)
+            .setTooltip(Component.translatable("gui.skinlayers3d.mod_settings.toon_specular_intensity.tooltip"))
+            .setSaveConsumer(value -> data.toonSpecularIntensity = value / 100.0f)
+            .build());
+        
+        // 描边设置
+        toonCategory.addEntry(entryBuilder
+            .startBooleanToggle(
+                Component.translatable("gui.skinlayers3d.mod_settings.toon_outline"),
+                data.toonOutlineEnabled)
+            .setDefaultValue(true)
+            .setTooltip(Component.translatable("gui.skinlayers3d.mod_settings.toon_outline.tooltip"))
+            .setSaveConsumer(value -> data.toonOutlineEnabled = value)
+            .build());
+        
+        toonCategory.addEntry(entryBuilder
+            .startIntSlider(
+                Component.translatable("gui.skinlayers3d.mod_settings.toon_outline_width"),
+                (int)(data.toonOutlineWidth * 1000), 1, 100)
+            .setDefaultValue(20)
+            .setTooltip(Component.translatable("gui.skinlayers3d.mod_settings.toon_outline_width.tooltip"))
+            .setSaveConsumer(value -> data.toonOutlineWidth = value / 1000.0f)
+            .build());
+        
+        toonCategory.addEntry(entryBuilder
+            .startIntSlider(
+                Component.translatable("gui.skinlayers3d.mod_settings.toon_outline_r"),
+                (int)(data.toonOutlineR * 100), 0, 100)
+            .setDefaultValue(10)
+            .setTooltip(Component.translatable("gui.skinlayers3d.mod_settings.toon_outline_color.tooltip"))
+            .setSaveConsumer(value -> data.toonOutlineR = value / 100.0f)
+            .build());
+        
+        toonCategory.addEntry(entryBuilder
+            .startIntSlider(
+                Component.translatable("gui.skinlayers3d.mod_settings.toon_outline_g"),
+                (int)(data.toonOutlineG * 100), 0, 100)
+            .setDefaultValue(10)
+            .setSaveConsumer(value -> data.toonOutlineG = value / 100.0f)
+            .build());
+        
+        toonCategory.addEntry(entryBuilder
+            .startIntSlider(
+                Component.translatable("gui.skinlayers3d.mod_settings.toon_outline_b"),
+                (int)(data.toonOutlineB * 100), 0, 100)
+            .setDefaultValue(10)
+            .setSaveConsumer(value -> data.toonOutlineB = value / 100.0f)
             .build());
         
         builder.setSavingRunnable(() -> {

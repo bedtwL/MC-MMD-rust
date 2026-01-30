@@ -35,6 +35,9 @@ public class SkinLayers3DRenderer<T extends Entity> extends EntityRenderer<T> {
 
     @Override
     public void render(T entityIn, float entityYaw, float tickDelta, PoseStack matrixStackIn, MultiBufferSource bufferIn, int packedLightIn) {
+        // 检查模型缓存清理
+        MMDModelManager.tick();
+        
         Minecraft MCinstance = Minecraft.getInstance();
         super.render(entityIn, entityYaw, tickDelta, matrixStackIn, bufferIn, packedLightIn);
         String animName = "";

@@ -33,17 +33,53 @@ public class MMDModelManager {
     static String gameDirectory = Minecraft.getInstance().gameDirectory.getAbsolutePath();
     
     private static final AtomicInteger cacheSize = new AtomicInteger(0);
-    private static long lastCleanupTime = System.currentTimeMillis();
-    private static final long CLEANUP_INTERVAL = 60000;
+    private static long lastModelSwitchTime = 0;
+    private static boolean pendingCleanup = false;
+    private static final long MODEL_SWITCH_CLEANUP_DELAY = 60000; // 切换模型后 1 分钟无操作则清理
 
     public static void Init() {
         models = new ConcurrentHashMap<>();
-        logger.info("MMDModelManager 初始化完成");
+        
+        // 从配置读取 GPU 蒙皮设置
+        useGpuSkinning = ConfigManager.isGpuSkinningEnabled();
+        logger.info("MMDModelManager 初始化完成 (GPU蒙皮: {})", useGpuSkinning ? "启用" : "禁用");
     }
 
+    // GPU 蒙皮模式开关（可通过配置切换）
+    private static boolean useGpuSkinning = false;
+    // Iris 兼容模式（使用 Minecraft 原生渲染系统）
+    private static boolean useNativeRender = false;
+    
+    /**
+     * 设置是否使用 GPU 蒙皮
+     * GPU 蒙皮可大幅提升大面数模型性能，但需要 OpenGL 4.3+ 支持
+     */
+    public static void setUseGpuSkinning(boolean enabled) {
+        useGpuSkinning = enabled;
+        logger.info("GPU 蒙皮模式: {}", enabled ? "启用" : "禁用");
+    }
+    
+    public static boolean isUseGpuSkinning() {
+        return useGpuSkinning;
+    }
+    
+    /**
+     * 设置是否使用原生渲染模式（Iris 兼容）
+     * 原生渲染使用 Minecraft 的 ShaderInstance 系统，Iris 可正确拦截
+     */
+    public static void setUseNativeRender(boolean enabled) {
+        useNativeRender = enabled;
+        logger.info("原生渲染模式 (Iris兼容): {}", enabled ? "启用" : "禁用");
+    }
+    
+    public static boolean isUseNativeRender() {
+        return useNativeRender;
+    }
+    
     /**
      * 加载模型
      * 支持任意名称的 PMX/PMD 文件
+     * 渲染模式优先级：原生渲染(Iris兼容) > GPU蒙皮 > CPU蒙皮
      */
     public static IMMDModel LoadModel(String modelName, long layerCount) {
         // 使用 ModelInfo 扫描模型文件
@@ -58,10 +94,30 @@ public class MMDModelManager {
         String modelDirStr = modelInfo.getFolderPath();
         boolean isPMD = modelInfo.isPMD();
         
-        logger.info("加载 {} 模型: {} -> {}", 
-            modelInfo.getFormatDescription(), modelName, modelInfo.getModelFileName());
+        String renderMode = useNativeRender ? "原生渲染(Iris兼容)" : (useGpuSkinning ? "GPU蒙皮" : "CPU蒙皮");
+        logger.info("加载 {} 模型: {} -> {} ({})", 
+            modelInfo.getFormatDescription(), modelName, modelInfo.getModelFileName(), renderMode);
         
         try {
+            // 优先使用原生渲染模式（Iris 兼容）
+            if (useNativeRender && !isPMD) {
+                IMMDModel nativeModel = MMDModelNativeRender.LoadModel(modelFilenameStr, modelDirStr, layerCount);
+                if (nativeModel != null) {
+                    return nativeModel;
+                }
+                logger.warn("原生渲染创建失败，回退到其他模式");
+            }
+            
+            // 其次使用 GPU 蒙皮
+            if (useGpuSkinning) {
+                IMMDModel gpuModel = MMDModelGpuSkinning.Create(modelFilenameStr, modelDirStr, isPMD, layerCount);
+                if (gpuModel != null) {
+                    return gpuModel;
+                }
+                logger.warn("GPU 蒙皮创建失败，回退到 CPU 蒙皮");
+            }
+            
+            // 最后使用 CPU 蒙皮
             return MMDModelOpenGL.Create(modelFilenameStr, modelDirStr, isPMD, layerCount);
         } catch (Exception e) {
             logger.error("加载模型失败: " + modelName, e);
@@ -105,13 +161,33 @@ public class MMDModelManager {
         return GetModel(modelName, "default");
     }
     
-    private static void checkAndCleanCache() {
-        long currentTime = System.currentTimeMillis();
-        int maxCacheSize = ConfigManager.getModelPoolMaxCount();
+    /**
+     * 记录模型切换事件，触发延迟清理
+     */
+    public static void onModelSwitch() {
+        lastModelSwitchTime = System.currentTimeMillis();
+        pendingCleanup = true;
+    }
+    
+    /**
+     * 检查是否需要清理缓存
+     * 在渲染循环中定期调用
+     */
+    public static void tick() {
+        if (!pendingCleanup) return;
         
-        if (currentTime - lastCleanupTime > CLEANUP_INTERVAL || cacheSize.get() >= maxCacheSize) {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastModelSwitchTime >= MODEL_SWITCH_CLEANUP_DELAY) {
+            logger.info("模型切换后 1 分钟无操作，清理缓存");
+            cleanupAllCache();
+            pendingCleanup = false;
+        }
+    }
+    
+    private static void checkAndCleanCache() {
+        int maxCacheSize = ConfigManager.getModelPoolMaxCount();
+        if (cacheSize.get() >= maxCacheSize) {
             cleanupCache(maxCacheSize);
-            lastCleanupTime = currentTime;
         }
     }
     
@@ -136,6 +212,36 @@ public class MMDModelManager {
             });
         
         logger.info("缓存清理完成 (剩余: {})", models.size());
+    }
+    
+    /**
+     * 清理所有缓存（保留当前使用的模型）
+     */
+    private static synchronized void cleanupAllCache() {
+        if (models.isEmpty()) return;
+        
+        long currentTime = System.currentTimeMillis();
+        int cleanedCount = 0;
+        
+        // 清理超过 1 分钟未访问的模型
+        var iterator = models.entrySet().iterator();
+        while (iterator.hasNext()) {
+            var entry = iterator.next();
+            if (currentTime - entry.getValue().lastAccessTime > MODEL_SWITCH_CLEANUP_DELAY) {
+                try {
+                    DeleteModel(entry.getValue());
+                    iterator.remove();
+                    cacheSize.decrementAndGet();
+                    cleanedCount++;
+                } catch (Exception e) {
+                    logger.error("清理模型失败: " + entry.getKey(), e);
+                }
+            }
+        }
+        
+        if (cleanedCount > 0) {
+            logger.info("已清理 {} 个未使用的模型缓存", cleanedCount);
+        }
     }
 
     public static void AddModel(String Name, IMMDModel model, String modelName) {
@@ -170,8 +276,29 @@ public class MMDModelManager {
 
     static void DeleteModel(Model model) {
         try {
-            MMDModelOpenGL.Delete((MMDModelOpenGL) model.model);
+            // 根据模型类型调用对应的删除方法
+            if (model.model instanceof MMDModelNativeRender) {
+                MMDModelNativeRender.Delete((MMDModelNativeRender) model.model);
+            } else if (model.model instanceof MMDModelGpuSkinning) {
+                MMDModelGpuSkinning.Delete((MMDModelGpuSkinning) model.model);
+            } else if (model.model instanceof MMDModelOpenGL) {
+                MMDModelOpenGL.Delete((MMDModelOpenGL) model.model);
+            }
             MMDAnimManager.DeleteModel(model.model);
+            
+            // 释放 EntityData 资源
+            if (model instanceof ModelWithEntityData med) {
+                NativeFunc nf = NativeFunc.GetInst();
+                if (med.entityData != null) {
+                    if (med.entityData.rightHandMat != 0) {
+                        nf.DeleteMat(med.entityData.rightHandMat);
+                    }
+                    if (med.entityData.leftHandMat != 0) {
+                        nf.DeleteMat(med.entityData.leftHandMat);
+                    }
+                    // matBuffer 由 GC 回收（allocateDirect）
+                }
+            }
         } catch (Exception e) {
             logger.error("删除模型失败", e);
         }
