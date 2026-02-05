@@ -702,4 +702,48 @@ public class NativeFunc {
      * @param weight 权重值 (0.0-1.0)
      */
     public native void SetMorphWeight(long model, int index, float weight);
+    
+    // ========== 物理配置相关 ==========
+    
+    /**
+     * 设置全局物理配置（实时调整，保存时调用）
+     * @param gravityY 重力 Y 分量（负数向下）
+     * @param physicsFps 物理模拟 FPS
+     * @param maxSubstepCount 每帧最大子步数
+     * @param solverIterations 求解器迭代次数
+     * @param pgsIterations PGS 迭代次数
+     * @param maxCorrectiveVelocity 最大修正速度
+     * @param linearDampingScale 线性阻尼缩放
+     * @param angularDampingScale 角速度阻尼缩放
+     * @param massScale 质量缩放
+     * @param linearSpringStiffnessScale 线性弹簧刚度缩放
+     * @param angularSpringStiffnessScale 角度弹簧刚度缩放
+     * @param linearSpringDampingFactor 线性弹簧阻尼系数
+     * @param angularSpringDampingFactor 角度弹簧阻尼系数
+     * @param inertiaStrength 惯性效果强度
+     * @param maxLinearVelocity 最大线速度
+     * @param maxAngularVelocity 最大角速度
+     * @param jointsEnabled 是否启用关节
+     * @param debugLog 是否输出调试日志
+     */
+    public native void SetPhysicsConfig(
+        float gravityY,
+        float physicsFps,
+        int maxSubstepCount,
+        int solverIterations,
+        int pgsIterations,
+        float maxCorrectiveVelocity,
+        float linearDampingScale,
+        float angularDampingScale,
+        float massScale,
+        float linearSpringStiffnessScale,
+        float angularSpringStiffnessScale,
+        float linearSpringDampingFactor,
+        float angularSpringDampingFactor,
+        float inertiaStrength,
+        float maxLinearVelocity,
+        float maxAngularVelocity,
+        boolean jointsEnabled,
+        boolean debugLog
+    );
 }
