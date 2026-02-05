@@ -18,7 +18,7 @@ jobs:
           submodules: recursive
       
       - name: Setup Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
       
       - name: Build Windows DLL
         run: cargo build --release --manifest-path rust_engine/Cargo.toml
@@ -37,7 +37,7 @@ jobs:
           submodules: recursive
       
       - name: Setup Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
       
       - name: Build Linux SO
         run: cargo build --release --manifest-path rust_engine/Cargo.toml
@@ -56,7 +56,7 @@ jobs:
           submodules: recursive
       
       - name: Setup Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
       
       - name: Build macOS dylib (x86_64)
         run: |
