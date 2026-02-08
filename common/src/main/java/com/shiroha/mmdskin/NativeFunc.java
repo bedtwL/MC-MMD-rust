@@ -16,15 +16,23 @@ import org.apache.logging.log4j.Logger;
 public class NativeFunc {
     public static final Logger logger = LogManager.getLogger();
     private static volatile String gameDirectory;
-    private static final boolean isLinux = System.getProperty("os.name").toLowerCase().contains("linux");
+    private static final boolean isAndroid;
+    private static final boolean isLinux;
     private static final boolean isWindows = System.getProperty("os.name").toLowerCase().contains("windows");
     private static final boolean isMacOS = System.getProperty("os.name").toLowerCase().contains("mac");
     private static final boolean isArm64;
     static {
         String arch = System.getProperty("os.arch").toLowerCase();
         isArm64 = arch.contains("aarch64") || arch.contains("arm64");
+        // Android 的 java.vendor 通常包含 "Android"，os.name 仍为 "Linux"
+        String vendor = System.getProperty("java.vendor", "").toLowerCase();
+        String vmName = System.getProperty("java.vm.name", "").toLowerCase();
+        isAndroid = vendor.contains("android") || vmName.contains("dalvik") || vmName.contains("art")
+                || System.getProperty("android.os.Build.VERSION.SDK_INT") != null;
+        // isLinux 排除 Android，避免误判
+        isLinux = System.getProperty("os.name").toLowerCase().contains("linux") && !isAndroid;
     }
-    static final String libraryVersion = "v1.0.0";
+    static final String libraryVersion = "v1.0.1";
     private static final String RELEASE_BASE_URL =
         "https://github.com/shiroha-233/MC-MMD-rust/releases/download/" + libraryVersion + "/";
     private static volatile NativeFunc inst;
@@ -224,7 +232,12 @@ public class NativeFunc {
         String fileName;
         String downloadFileName;
         
-        if (isWindows) {
+        if (isAndroid) {
+            logger.info("Android Env Detected! Arch: arm64");
+            resourcePath = "/natives/android-arm64/libmmd_engine.so";
+            fileName = "libmmd_engine.so";
+            downloadFileName = "libmmd_engine-android-arm64.so";
+        } else if (isWindows) {
             String archDir = isArm64 ? "windows-arm64" : "windows-x64";
             logger.info("Windows Env Detected! Arch: " + archDir);
             resourcePath = "/natives/" + archDir + "/mmd_engine.dll";
