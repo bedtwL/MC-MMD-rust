@@ -584,6 +584,27 @@ public class NativeFunc {
      * @param buffer 目标 DirectByteBuffer (至少 32 字节)
      */
     public native void GetCameraTransform(long anim, float frame, ByteBuffer buffer);
+    
+    /**
+     * 查询动画是否包含骨骼关键帧
+     * @param anim 动画句柄
+     * @return 是否包含骨骼数据
+     */
+    public native boolean HasBoneData(long anim);
+    
+    /**
+     * 查询动画是否包含表情关键帧
+     * @param anim 动画句柄
+     * @return 是否包含表情数据
+     */
+    public native boolean HasMorphData(long anim);
+    
+    /**
+     * 将 source 动画的骨骼和 Morph 数据合并到 target 动画中
+     * @param target 目标动画句柄（将被修改）
+     * @param source 源动画句柄（只读）
+     */
+    public native void MergeAnimation(long target, long source);
 
     public native void SetHeadAngle(long model, float x, float y, float z, boolean flag);
     

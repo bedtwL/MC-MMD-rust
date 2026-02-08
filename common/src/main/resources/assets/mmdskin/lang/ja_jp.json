@@ -118,5 +118,8 @@
   "key.mmdskin.morph_wheel": "表情ホイール",
   "gui.mmdskin.morph_wheel": "表情ホイール",
   "gui.mmdskin.morph_config": "表情ホイール設定",
-  "gui.mmdskin.reset_morph": "表情リセット"
+  "gui.mmdskin.reset_morph": "表情リセット",
+  
+  "gui.mmdskin.stage.cinematic": "シネマモード",
+  "gui.mmdskin.stage.start": "開始"
 }

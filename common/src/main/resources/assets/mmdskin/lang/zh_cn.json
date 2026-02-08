@@ -118,5 +118,8 @@
   "key.mmdskin.morph_wheel": "表情轮盘",
   "gui.mmdskin.morph_wheel": "表情选择轮盘",
   "gui.mmdskin.morph_config": "表情轮盘配置",
-  "gui.mmdskin.reset_morph": "重置表情"
+  "gui.mmdskin.reset_morph": "重置表情",
+  
+  "gui.mmdskin.stage.cinematic": "影院模式",
+  "gui.mmdskin.stage.start": "开始"
 }

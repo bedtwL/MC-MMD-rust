@@ -118,5 +118,8 @@
   "key.mmdskin.morph_wheel": "Expression Wheel",
   "gui.mmdskin.morph_wheel": "Expression Wheel",
   "gui.mmdskin.morph_config": "Expression Wheel Config",
-  "gui.mmdskin.reset_morph": "Reset Expression"
+  "gui.mmdskin.reset_morph": "Reset Expression",
+  
+  "gui.mmdskin.stage.cinematic": "Cinema",
+  "gui.mmdskin.stage.start": "Start"
 }

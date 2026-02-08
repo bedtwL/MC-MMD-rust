@@ -315,15 +315,15 @@ fn read_camera_keyframe<R: Read>(reader: &mut R) -> Result<CameraKeyframe> {
     let is_perspective = reader.read_u8()
         .map_err(|e| MmdError::VmdParse(format!("Failed to read camera perspective flag: {}", e)))? == 0;
 
-    // 坐标系转换：Z 轴反转（与骨骼一致）
-    let look_at = Vec3::new(lx, ly, -lz);
-    let angle = Vec3::new(-ax, -ay, az);
+    // 保留 VMD 原始值（不做坐标系转换，由 compute_camera_transform 统一处理）
+    let look_at = Vec3::new(lx, ly, lz);
+    let angle = Vec3::new(ax, ay, az);
 
     Ok(CameraKeyframe {
         frame_index,
         look_at,
         angle,
-        distance: -distance,
+        distance,
         fov,
         is_perspective,
         interpolation,
@@ -359,6 +359,21 @@ impl VmdAnimation {
     /// 是否包含相机数据
     pub fn has_camera(&self) -> bool {
         self.motion.has_camera_data()
+    }
+
+    /// 是否包含骨骼数据
+    pub fn has_bones(&self) -> bool {
+        !self.motion.bone_tracks.is_empty()
+    }
+
+    /// 是否包含表情数据
+    pub fn has_morphs(&self) -> bool {
+        !self.motion.morph_tracks.is_empty()
+    }
+
+    /// 合并另一个动画的骨骼和 Morph 数据
+    pub fn merge(&mut self, other: &VmdAnimation) {
+        self.motion.merge(&other.motion);
     }
 
     /// 获取相机帧变换

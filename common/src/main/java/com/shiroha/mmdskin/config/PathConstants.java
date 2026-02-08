@@ -258,4 +258,32 @@ public final class PathConstants {
         }
         return true;
     }
+    
+    /**
+     * 确保 StageAnim 目录存在，首次创建时放置说明文件
+     */
+    public static void ensureStageAnimDir() {
+        File stageDir = getStageAnimDir();
+        if (!stageDir.exists()) {
+            if (stageDir.mkdirs()) {
+                // 首次创建，写入说明文件
+                try {
+                    File readme = new File(stageDir, "_readme.txt");
+                    java.nio.file.Files.writeString(readme.toPath(),
+                        "=== StageAnim 舞台动画目录 ===\n\n" +
+                        "请将舞台动画 VMD 文件按子文件夹组织：\n\n" +
+                        "StageAnim/\n" +
+                        "  千本桜/\n" +
+                        "    motion.vmd      (动作VMD)\n" +
+                        "    camera.vmd      (相机VMD)\n" +
+                        "    face.vmd        (表情VMD)\n" +
+                        "  极乐净土/\n" +
+                        "    ...\n\n" +
+                        "每个子文件夹视为一个「舞台包」，其中的所有非相机VMD会自动合并播放。\n" +
+                        "含相机数据的VMD会自动识别为相机文件。\n"
+                    );
+                } catch (Exception ignored) {}
+            }
+        }
+    }
 }

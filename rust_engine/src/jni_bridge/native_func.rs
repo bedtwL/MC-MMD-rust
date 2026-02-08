@@ -7,6 +7,7 @@ use jni::objects::{JByteBuffer, JClass, JString};
 use jni::sys::{jboolean, jbyte, jfloat, jint, jlong, jstring};
 use jni::JNIEnv;
 use std::ptr;
+use std::sync::Arc;
 
 use crate::animation::{VmdAnimation, VmdFile};
 use crate::model::load_pmx;
@@ -796,6 +797,62 @@ pub extern "system" fn Java_com_shiroha_mmdskin_NativeFunc_GetCameraTransform(
                 *i_ptr = if transform.is_perspective { 1 } else { 0 };
             }
         }
+    }
+}
+
+/// 查询动画是否包含骨骼关键帧
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_mmdskin_NativeFunc_HasBoneData(
+    _env: JNIEnv,
+    _class: JClass,
+    anim: jlong,
+) -> jboolean {
+    let animations = ANIMATIONS.read().unwrap();
+    if let Some(animation) = animations.get(&anim) {
+        if animation.has_bones() { 1u8 } else { 0u8 }
+    } else {
+        0u8
+    }
+}
+
+/// 查询动画是否包含表情关键帧
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_mmdskin_NativeFunc_HasMorphData(
+    _env: JNIEnv,
+    _class: JClass,
+    anim: jlong,
+) -> jboolean {
+    let animations = ANIMATIONS.read().unwrap();
+    if let Some(animation) = animations.get(&anim) {
+        if animation.has_morphs() { 1u8 } else { 0u8 }
+    } else {
+        0u8
+    }
+}
+
+/// 将 source 动画的骨骼和 Morph 数据合并到 target 动画中
+/// 实现方式：克隆 target → 合并 source → 替换回 HashMap
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_mmdskin_NativeFunc_MergeAnimation(
+    _env: JNIEnv,
+    _class: JClass,
+    target: jlong,
+    source: jlong,
+) {
+    // 先读取并克隆两个动画，避免借用冲突
+    let (target_clone, source_ref) = {
+        let animations = ANIMATIONS.read().unwrap();
+        let t = animations.get(&target).cloned();
+        let s = animations.get(&source).cloned();
+        (t, s)
+    };
+
+    if let (Some(target_arc), Some(source_arc)) = (target_clone, source_ref) {
+        let mut merged = (*target_arc).clone();
+        merged.merge(&source_arc);
+        // 写回 HashMap，替换原 target
+        let mut animations = ANIMATIONS.write().unwrap();
+        animations.insert(target, Arc::new(merged));
     }
 }
 

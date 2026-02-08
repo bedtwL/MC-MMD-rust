@@ -19,8 +19,7 @@ public class StageConfig {
     private static StageConfig instance;
     
     // 配置字段
-    public String lastMotionVmd = "";
-    public String lastCameraVmd = "";
+    public String lastStagePack = "";
     public boolean cinematicMode = true;
     
     private StageConfig() {}

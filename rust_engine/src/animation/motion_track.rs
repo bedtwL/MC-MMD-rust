@@ -3,7 +3,7 @@
 //! 存储单个骨骼或 Morph 的所有关键帧，并提供查找和插值功能
 
 use std::collections::BTreeMap;
-use glam::{Vec3, Quat};
+use glam::{Vec3, Quat, Mat4};
 
 use super::bezier_curve::BezierCurveFactory;
 use super::interpolation::{
@@ -563,23 +563,48 @@ impl CameraMotionTrack {
     }
 
     /// 从 CameraKeyframe 计算相机位置
-    /// MMD 相机模型：相机围绕 look_at 点，按 angle 旋转，distance 为距离
+    /// 复刻 mdanceio PerspectiveCamera.update() 的矩阵法：
+    ///   1. angle 直接使用（mdanceio 的 CAMERA_DIRECTION 和 ANGLE_SCALE_FACTOR 双重取反抵消）
+    ///   2. 四元数旋转顺序 z * x * y
+    ///   3. 视图矩阵 = rotation * translation(-look_at)，然后 Z 列加 -distance（DISTANCE_FACTOR=-1）
+    ///   4. 求逆得到世界位置
+    ///   5. 转换到 MC 坐标系（Z 取反）并提取 pitch/yaw
     fn compute_camera_transform(look_at: Vec3, angle: Vec3, distance: f32, fov: f32, is_perspective: bool) -> CameraFrameTransform {
-        // angle: (pitch, yaw, roll) 欧拉角弧度
-        let (sin_x, cos_x) = angle.x.sin_cos();
-        let (sin_y, cos_y) = angle.y.sin_cos();
+        // mdanceio 在 synchronize_camera 中对 angle 乘 CAMERA_DIRECTION(-1,1,1)，
+        // 然后在 camera.update 中再乘 ANGLE_SCALE_FACTOR(-1,1,1)，双重取反抵消。
+        // 因此直接使用 VMD 原始 angle，不做任何缩放。
 
-        // 相机在 look_at 前方 distance 处，按角度旋转
-        let offset = Vec3::new(
-            -distance * cos_x * sin_y,
-            distance * sin_x,
-            -distance * cos_x * cos_y,
-        );
-        let position = look_at + offset;
+        // 四元数旋转顺序: z * x * y (mdanceio camera.rs:115-118)
+        let qx = Quat::from_rotation_x(angle.x);
+        let qy = Quat::from_rotation_y(angle.y);
+        let qz = Quat::from_rotation_z(angle.z);
+        let view_orientation = qz * qx * qy;
+
+        // 视图矩阵 = rotation * translation(-look_at)
+        let rot_mat = Mat4::from_quat(view_orientation);
+        let trans_mat = Mat4::from_translation(-look_at);
+        let mut view_matrix = rot_mat * trans_mat;
+
+        // mdanceio project.rs:1135 DISTANCE_FACTOR = -1.0，需要对 distance 取反
+        view_matrix.w_axis.z += -distance;
+
+        // 从视图矩阵求逆提取相机世界位置
+        let inv = view_matrix.inverse();
+        let position_mmd = Vec3::new(inv.w_axis.x, inv.w_axis.y, inv.w_axis.z);
+
+        // MMD → MC 坐标转换（Z 取反）
+        let position_mc = Vec3::new(position_mmd.x, position_mmd.y, -position_mmd.z);
+        let look_at_mc = Vec3::new(look_at.x, look_at.y, -look_at.z);
+
+        // 从相机指向 look_at 的方向提取 MC pitch/yaw
+        let dir = (look_at_mc - position_mc).normalize_or_zero();
+        // MC pitch: 正值 = 朝下看，yaw: 0 = 南(+Z)
+        let mc_pitch = (-dir.y).asin();
+        let mc_yaw = (-dir.x).atan2(dir.z);
 
         CameraFrameTransform {
-            position,
-            rotation: angle,
+            position: position_mc,
+            rotation: Vec3::new(mc_pitch, mc_yaw, 0.0),
             fov,
             is_perspective,
         }
