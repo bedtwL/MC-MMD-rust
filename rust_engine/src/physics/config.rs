@@ -190,10 +190,10 @@ impl Default for PhysicsConfig {
             bust_linear_damping_scale: 1.5,
             bust_angular_damping_scale: 1.5,
             bust_mass_scale: 1.0,
-            bust_linear_spring_stiffness_scale: 2.0,
-            bust_angular_spring_stiffness_scale: 2.0,
-            bust_linear_spring_damping_factor: 2.0,
-            bust_angular_spring_damping_factor: 2.0,
+            bust_linear_spring_stiffness_scale: 8.0,
+            bust_angular_spring_stiffness_scale: 8.0,
+            bust_linear_spring_damping_factor: 3.0,
+            bust_angular_spring_damping_factor: 3.0,
 
             // ====== 调试 ======
             // 是否启用关节约束

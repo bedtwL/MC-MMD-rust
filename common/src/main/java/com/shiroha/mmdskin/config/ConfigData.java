@@ -83,10 +83,10 @@ public class ConfigData {
     public float physicsBustLinearDampingScale = 1.5f;
     public float physicsBustAngularDampingScale = 1.5f;
     public float physicsBustMassScale = 1.0f;
-    public float physicsBustLinearSpringStiffnessScale = 2.0f;
-    public float physicsBustAngularSpringStiffnessScale = 2.0f;
-    public float physicsBustLinearSpringDampingFactor = 2.0f;
-    public float physicsBustAngularSpringDampingFactor = 2.0f;
+    public float physicsBustLinearSpringStiffnessScale = 8.0f;
+    public float physicsBustAngularSpringStiffnessScale = 8.0f;
+    public float physicsBustLinearSpringDampingFactor = 3.0f;
+    public float physicsBustAngularSpringDampingFactor = 3.0f;
     
     // 调试
     public boolean physicsJointsEnabled = true;
