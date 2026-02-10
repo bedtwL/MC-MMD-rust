@@ -136,14 +136,18 @@ public class MMDModelGpuSkinning implements IMMDModel {
     private final Vector3f light1Direction = new Vector3f();
     private final Quaternionf tempQuat = new Quaternionf();
     
-    // 着色器属性位置（每帧根据当前着色器更新）
+    // 着色器属性位置（G1 优化：按 shaderProgram 缓存，避免每帧重复查询）
     private int shaderProgram;
+    private int cachedShaderProgram = -1;
     private int positionLocation, normalLocation;
     private int uv0Location, uv1Location, uv2Location;
     private int colorLocation;
     // Iris 重命名的属性
     private int I_positionLocation, I_normalLocation;
     private int I_uv0Location, I_uv2Location, I_colorLocation;
+    
+    // G4 优化：缓存子网格数量（静态值，避免每帧 JNI 查询）
+    private int subMeshCount;
     
     // 临时存储当前 PoseStack，供 renderNormal 使用
     private PoseStack currentDeliverStack;
