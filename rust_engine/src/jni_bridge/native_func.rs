@@ -2459,9 +2459,11 @@ pub extern "system" fn Java_com_shiroha_mmdskin_NativeFunc_GetMaterialMorphResul
 }
 
 /// 复制材质 Morph 结果到 ByteBuffer
-/// 每个材质 28 个 float: diffuse(4) + specular(3) + specular_strength(1) +
-/// ambient(3) + edge_color(4) + edge_size(1) + texture_tint(4) +
-/// environment_tint(4) + toon_tint(4)
+/// 每个材质 56 个 float:
+/// mul[diffuse(4) + specular(3) + specular_strength(1) + ambient(3) +
+///     edge_color(4) + edge_size(1) + texture_tint(4) + environment_tint(4) + toon_tint(4)] = 28
+/// + add[同上布局] = 28
+/// 渲染时：final = base * mul + add
 #[no_mangle]
 pub extern "system" fn Java_com_shiroha_mmdskin_NativeFunc_CopyMaterialMorphResultsToBuffer(
     env: JNIEnv,
@@ -2556,5 +2558,74 @@ pub extern "system" fn Java_com_shiroha_mmdskin_NativeFunc_SetPhysicsConfig(
             gravity_y, physics_fps, 
             linear_damping_scale, angular_damping_scale,
             linear_spring_stiffness_scale);
+    }
+}
+
+// ========== 第一人称模式相关 ==========
+
+/// 设置第一人称模式（启用时自动隐藏头部子网格，禁用时恢复）
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_mmdskin_NativeFunc_SetFirstPersonMode(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+    enabled: jboolean,
+) {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let mut model = model_arc.lock().unwrap();
+        model.set_first_person_mode(enabled != 0);
+    }
+}
+
+/// 获取第一人称模式是否启用
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_mmdskin_NativeFunc_IsFirstPersonMode(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+) -> jboolean {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let model = model_arc.lock().unwrap();
+        if model.is_first_person_enabled() { 1 } else { 0 }
+    } else {
+        0
+    }
+}
+
+/// 获取头部骨骼的静态 Y 坐标（模型局部空间，用于相机高度计算）
+#[no_mangle]
+pub extern "system" fn Java_com_shiroha_mmdskin_NativeFunc_GetHeadBonePositionY(
+    _env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+) -> jfloat {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let mut model = model_arc.lock().unwrap();
+        model.get_head_bone_rest_position_y()
+    } else {
+        0.0
+    }
+}
+
+/// 获取眼睛骨骼的当前动画位置（模型局部空间）
+/// 每帧调用，返回经过动画/物理更新后的实时 [x, y, z]
+/// 如果传入的 out 数组长度 < 3 则不写入
+#[no_mangle]
+#[allow(unused_mut)]
+pub extern "system" fn Java_com_shiroha_mmdskin_NativeFunc_GetEyeBonePosition(
+    mut env: JNIEnv,
+    _class: JClass,
+    model: jlong,
+    out: jni::objects::JFloatArray,
+) {
+    let models = MODELS.read().unwrap();
+    if let Some(model_arc) = models.get(&model) {
+        let mut model = model_arc.lock().unwrap();
+        let pos = model.get_eye_bone_animated_position();
+        let buf: [f32; 3] = [pos.x, pos.y, pos.z];
+        let _ = env.set_float_array_region(&out, 0, &buf);
     }
 }
