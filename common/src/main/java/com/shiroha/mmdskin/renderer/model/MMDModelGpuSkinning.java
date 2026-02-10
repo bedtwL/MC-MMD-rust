@@ -262,9 +262,7 @@ public class MMDModelGpuSkinning implements IMMDModel {
             int indexSize = indexCount * indexElementSize;
             long indexData = nf.GetIndices(model);
             ByteBuffer indexBuffer = ByteBuffer.allocateDirect(indexSize);
-            for (int i = 0; i < indexSize; ++i) {
-                indexBuffer.put(nf.ReadByte(indexData, i));
-            }
+            nf.CopyDataToByteBuffer(indexBuffer, indexData, indexSize);
             indexBuffer.position(0);
             GL46C.glBindBuffer(GL46C.GL_ELEMENT_ARRAY_BUFFER, indexVbo);
             GL46C.glBufferData(GL46C.GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL46C.GL_STATIC_DRAW);
