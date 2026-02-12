@@ -4,6 +4,10 @@ import com.shiroha.mmdskin.NativeFunc;
 import com.shiroha.mmdskin.config.ConfigManager;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,8 +39,21 @@ public final class FirstPersonManager {
     
     /** 眼睛骨骼是否有效（至少有一个分量非零） */
     private static boolean eyeBoneValid = false;
+
+    /** 记录最后一帧摄像机位置，用于修复十字准星偏移 */
+    private static Vec3 lastCameraPos = Vec3.ZERO;
     
     private FirstPersonManager() {}
+
+    /** 设置最后一帧摄像机位置 */
+    public static void setLastCameraPos(Vec3 pos) {
+        lastCameraPos = pos;
+    }
+
+    /** 获取最后一帧摄像机位置 */
+    public static Vec3 getLastCameraPos() {
+        return lastCameraPos;
+    }
     
     /**
      * 判断当前是否应该使用第一人称模型渲染
@@ -125,6 +142,26 @@ public final class FirstPersonManager {
         out[2] = eyeBonePos[2] * scale;
     }
     
+    /**
+     * 获取考虑旋转后的眼睛世界坐标位置
+     */
+    public static Vec3 getRotatedEyePosition(Entity entity, float partialTick) {
+        float[] eyeOffset = new float[3];
+        getEyeWorldOffset(eyeOffset);
+        double px = Mth.lerp(partialTick, entity.xo, entity.getX());
+        double py = Mth.lerp(partialTick, entity.yo, entity.getY());
+        double pz = Mth.lerp(partialTick, entity.zo, entity.getZ());
+        float bodyYaw = entity instanceof LivingEntity le
+                ? Mth.rotLerp(partialTick, le.yBodyRotO, le.yBodyRot)
+                : Mth.rotLerp(partialTick, entity.yRotO, entity.getYRot());
+        float yawRad = (float) Math.toRadians(bodyYaw);
+        double sinYaw = Math.sin(yawRad);
+        double cosYaw = Math.cos(yawRad);
+        double worldOffX = eyeOffset[0] * cosYaw - eyeOffset[2] * sinYaw;
+        double worldOffZ = eyeOffset[0] * sinYaw + eyeOffset[2] * cosYaw;
+        return new Vec3(px + worldOffX, py + eyeOffset[1], pz + worldOffZ);
+    }
+
     /**
      * 重置状态（模型卸载时调用）
      */

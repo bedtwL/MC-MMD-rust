@@ -2,6 +2,7 @@ package com.shiroha.mmdskin.mixin.forge;
 
 import com.shiroha.mmdskin.MmdSkinClient;
 import com.shiroha.mmdskin.NativeFunc;
+import com.shiroha.mmdskin.forge.YsmCompat;
 import com.shiroha.mmdskin.renderer.animation.AnimationStateManager;
 import com.shiroha.mmdskin.config.ModelConfigManager;
 import com.shiroha.mmdskin.renderer.core.FirstPersonManager;
@@ -15,6 +16,7 @@ import com.shiroha.mmdskin.renderer.model.MMDModelManager;
 import com.shiroha.mmdskin.renderer.model.MMDModelManager.Model;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.GameRenderer;
@@ -55,23 +57,29 @@ public abstract class ForgePlayerRendererMixin extends LivingEntityRenderer<Abst
                       MultiBufferSource vertexConsumers, int packedLight, CallbackInfo ci) {
         // 获取玩家选择的模型（使用同步管理器，支持联机）
         String playerName = player.getName().getString();
-        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        Minecraft mc = Minecraft.getInstance();
         boolean isLocalPlayer = mc.player != null && mc.player.getUUID().equals(player.getUUID());
+
+        // 第一人称模式下的 YSM 优先级处理
+        if (isLocalPlayer && FirstPersonManager.shouldRenderFirstPerson()) {
+            String selectedModel = PlayerModelSyncManager.getPlayerModel(player.getUUID(), playerName, isLocalPlayer);
+            // YSM 激活时让渡渲染权
+            if (YsmCompat.isYsmActive(player)) {
+                ci.cancel();
+                return;
+            }
+            // 无 MMD 模型或原版渲染模式或旁观者
+            if (selectedModel == null || selectedModel.isEmpty() || selectedModel.equals("默认 (原版渲染)") || player.isSpectator()) {
+                ci.cancel();
+                return;
+            }
+        }
+
         String selectedModel = PlayerModelSyncManager.getPlayerModel(player.getUUID(), playerName, isLocalPlayer);
         
-        // 如果选择了默认渲染或未选择模型，使用原版渲染
-        if (selectedModel == null || selectedModel.isEmpty() || selectedModel.equals("默认 (原版渲染)")) {
-            if (isLocalPlayer) {
-                // 清理第一人称状态，防止残留的相机偏移
-                FirstPersonManager.reset();
-                // LevelRendererMixin 会在第一人称配置开启时强制渲染本地玩家（用于 MMD 模型），
-                // 但此处无 MMD 模型，需要取消渲染以避免原版模型挡住视野
-                if (FirstPersonManager.shouldRenderFirstPerson()) {
-                    ci.cancel();
-                    return;
-                }
-            }
-            // 非本地玩家或非第一人称：让原版 PlayerRenderer.render() 正常处理
+        // 如果选择了默认渲染或未选择模型，或 YSM 激活，或旁观者，使用原版渲染
+        if (selectedModel == null || selectedModel.isEmpty() || selectedModel.equals("默认 (原版渲染)") || YsmCompat.isYsmActive(player) || player.isSpectator()) {
+            super.render(player, entityYaw, tickDelta, matrixStack, vertexConsumers, packedLight);
             return;
         }
         

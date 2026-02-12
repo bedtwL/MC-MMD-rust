@@ -97,6 +97,8 @@ public class ConfigData {
     
     // 第一人称模型显示
     public boolean firstPersonModelEnabled = false;
+    public float firstPersonCameraForwardOffset = 0.0f;
+    public float firstPersonCameraVerticalOffset = 0.0f;
     
     /**
      * 从文件加载配置

@@ -12,6 +12,7 @@ import com.shiroha.mmdskin.ui.network.MorphWheelNetworkHandler;
 import com.shiroha.mmdskin.ui.network.PlayerModelSyncManager;
 import com.shiroha.mmdskin.ui.network.StageNetworkHandler;
 import com.shiroha.mmdskin.renderer.camera.MMDCameraController;
+import com.shiroha.mmdskin.renderer.camera.StageAudioPlayer;
 import com.shiroha.mmdskin.ui.wheel.ConfigWheelScreen;
 import com.shiroha.mmdskin.ui.wheel.MaidConfigWheelScreen;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -230,6 +231,9 @@ public class MmdSkinRegisterClient {
             
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null) return;
+
+            // 远程舞台音频距离衰减（每秒更新一次）
+            StageAudioPlayer.tickRemoteAttenuation();
             
             // 主配置轮盘按键处理
             if (mc.screen == null || mc.screen instanceof ConfigWheelScreen) {
@@ -290,6 +294,9 @@ public class MmdSkinRegisterClient {
                     logger.info("玩家加入服务器，广播模型选择: {}", selectedModel);
                     PlayerModelSyncManager.broadcastLocalModelSelection(mc.player.getUUID(), selectedModel);
                 }
+                // 请求所有玩家的模型信息
+                MmdSkinRegisterCommon.channel.sendToServer(
+                    new MmdSkinNetworkPack(10, mc.player.getUUID(), ""));
             }
         }
         
