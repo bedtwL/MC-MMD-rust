@@ -15,6 +15,7 @@ import com.shiroha.mmdskin.renderer.camera.MMDCameraController;
 import com.shiroha.mmdskin.renderer.camera.StageAudioPlayer;
 import com.shiroha.mmdskin.ui.wheel.ConfigWheelScreen;
 import com.shiroha.mmdskin.ui.wheel.MaidConfigWheelScreen;
+import com.shiroha.mmdskin.util.KeyMappingUtil;
 import com.mojang.blaze3d.platform.InputConstants;
 import java.io.File;
 import net.minecraft.client.Minecraft;
@@ -81,6 +82,9 @@ public class MmdSkinRegisterClient {
      * 注册事件监听器到两个事件总线
      */
     public static void Register() {
+        // 注入按键获取逻辑
+        KeyMappingUtil.setBoundKeyGetter(k -> k.getKey());
+
         // 注册到 Forge 事件总线（按键输入、客户端 Tick）
         // 注意：按键注册和实体渲染器注册已由 MmdSkinForgeClient 中的 @SubscribeEvent 处理
         //（RegisterKeyMappingsEvent 和 EntityRenderersEvent 在 FMLClientSetupEvent 之前触发）
@@ -239,8 +243,7 @@ public class MmdSkinRegisterClient {
             if (mc.screen == null || mc.screen instanceof ConfigWheelScreen) {
                 boolean keyDown = keyConfigWheel.isDown();
                 if (keyDown && !configWheelKeyWasDown) {
-                    int keyCode = keyConfigWheel.getKey().getValue();
-                    mc.setScreen(new ConfigWheelScreen(keyCode));
+                    mc.setScreen(new ConfigWheelScreen(keyConfigWheel));
                 }
                 configWheelKeyWasDown = keyDown;
             } else {
@@ -274,8 +277,7 @@ public class MmdSkinRegisterClient {
             String className = target.getClass().getName();
             if (className.contains("EntityMaid") || className.contains("touhoulittlemaid")) {
                 String maidName = target.getName().getString();
-                int keyCode = keyMaidConfigWheel.getKey().getValue();
-                mc.setScreen(new MaidConfigWheelScreen(target.getUUID(), target.getId(), maidName, keyCode));
+                mc.setScreen(new MaidConfigWheelScreen(target.getUUID(), target.getId(), maidName, keyMaidConfigWheel));
                 logger.info("打开女仆配置轮盘: {} (ID: {})", maidName, target.getId());
             }
         }

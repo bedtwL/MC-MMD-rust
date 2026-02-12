@@ -17,6 +17,7 @@ import com.shiroha.mmdskin.renderer.camera.MMDCameraController;
 import com.shiroha.mmdskin.renderer.camera.StageAudioPlayer;
 import com.shiroha.mmdskin.ui.wheel.ConfigWheelScreen;
 import com.shiroha.mmdskin.ui.wheel.MaidConfigWheelScreen;
+import com.shiroha.mmdskin.util.KeyMappingUtil;
 
 import java.io.File;
 import net.fabricmc.api.EnvType;
@@ -62,6 +63,14 @@ public class MmdSkinRegisterClient {
     public static void Register() {
         Minecraft MCinstance = Minecraft.getInstance();
         
+        // 注入按键获取逻辑
+        KeyMappingUtil.setBoundKeyGetter(k -> {
+            if (k instanceof KeyMappingAccessor accessor) {
+                return accessor.mmd$getBoundKey();
+            }
+            return InputConstants.UNKNOWN;
+        });
+
         // 注册按键
         KeyBindingHelper.registerKeyBinding(keyConfigWheel);
         if (MaidCompatMixinPlugin.isMaidModLoaded()) {
@@ -148,8 +157,7 @@ public class MmdSkinRegisterClient {
             if (MCinstance.screen == null || MCinstance.screen instanceof ConfigWheelScreen) {
                 boolean keyDown = keyConfigWheel.isDown();
                 if (keyDown && !configWheelKeyWasDown) {
-                    int keyCode = ((KeyMappingAccessor) keyConfigWheel).mmd$getBoundKey().getValue();
-                    MCinstance.setScreen(new ConfigWheelScreen(keyCode));
+                    MCinstance.setScreen(new ConfigWheelScreen(keyConfigWheel));
                 }
                 configWheelKeyWasDown = keyDown;
             } else {
@@ -238,8 +246,7 @@ public class MmdSkinRegisterClient {
         String className = target.getClass().getName();
         if (className.contains("EntityMaid") || className.contains("touhoulittlemaid")) {
             String maidName = target.getName().getString();
-            int keyCode = ((KeyMappingAccessor) keyMaidConfigWheel).mmd$getBoundKey().getValue();
-            mc.setScreen(new MaidConfigWheelScreen(target.getUUID(), target.getId(), maidName, keyCode));
+            mc.setScreen(new MaidConfigWheelScreen(target.getUUID(), target.getId(), maidName, keyMaidConfigWheel));
             logger.info("打开女仆配置轮盘: {} (ID: {})", maidName, target.getId());
         }
     }
