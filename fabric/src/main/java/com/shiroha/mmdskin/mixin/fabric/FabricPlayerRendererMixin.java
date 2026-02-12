@@ -117,6 +117,9 @@ public abstract class FabricPlayerRendererMixin extends LivingEntityRenderer<Abs
         // 计算渲染参数
         RenderParams params = calculateRenderParams(player, modelData, tickDelta);
         
+        // pushPose 隔离缩放，防止泄漏到 EntityRenderDispatcher 的 renderHitbox()
+        matrixStack.pushPose();
+        
         // 渲染模型
         if (InventoryRenderHelper.isInventoryScreen()) {
             // 库存屏幕渲染
@@ -136,6 +139,8 @@ public abstract class FabricPlayerRendererMixin extends LivingEntityRenderer<Abs
         
         // 渲染手持物品（委托给 ItemRenderHelper）
         ItemRenderHelper.renderItems(player, modelData, matrixStack, vertexConsumers, packedLight);
+        
+        matrixStack.popPose();
         
         // 取消原版渲染
         ci.cancel();
