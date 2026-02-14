@@ -79,7 +79,6 @@ public abstract class ForgePlayerRendererMixin extends LivingEntityRenderer<Abst
         
         // 如果选择了默认渲染或未选择模型，或 YSM 激活，或旁观者，使用原版渲染
         if (selectedModel == null || selectedModel.isEmpty() || selectedModel.equals("默认 (原版渲染)") || YsmCompat.isYsmActive(player) || player.isSpectator()) {
-            super.render(player, entityYaw, tickDelta, matrixStack, vertexConsumers, packedLight);
             return;
         }
         
