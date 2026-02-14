@@ -5,6 +5,7 @@ import com.shiroha.mmdskin.forge.config.ModConfigScreen;
 import com.shiroha.mmdskin.forge.network.MmdSkinNetworkPack;
 import com.shiroha.mmdskin.maid.MaidActionNetworkHandler;
 import com.shiroha.mmdskin.maid.MaidModelNetworkHandler;
+import com.shiroha.mmdskin.renderer.model.MMDModelManager;
 import com.shiroha.mmdskin.renderer.render.MmdSkinRenderFactory;
 import com.shiroha.mmdskin.renderer.render.MmdSkinRendererPlayerHelper;
 import com.shiroha.mmdskin.ui.network.ActionWheelNetworkHandler;
@@ -255,6 +256,9 @@ public class MmdSkinRegisterClient {
             
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null) return;
+
+            // 模型/纹理缓存 GC
+            MMDModelManager.tick();
 
             // 远程舞台音频距离衰减（每秒更新一次）
             StageAudioPlayer.tickRemoteAttenuation();

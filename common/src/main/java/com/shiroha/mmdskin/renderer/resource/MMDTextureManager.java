@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL46C;
+import org.lwjgl.system.MemoryUtil;
 
 /**
  * MMD 纹理管理器
@@ -34,7 +35,7 @@ public class MMDTextureManager {
     private static NativeFunc nf;
     
     /** 活跃纹理（refCount > 0） */
-    private static Map<String, Texture> textures;
+    private static volatile Map<String, Texture> textures;
     
     /** 延迟释放队列（refCount == 0，等待 TTL 超时或预算淘汰） */
     private static final Map<String, Texture> pendingRelease = new ConcurrentHashMap<>();
@@ -59,8 +60,10 @@ public class MMDTextureManager {
      * @param filename 纹理文件完整路径
      */
     public static void preloadTexture(String filename) {
-        // 已有 GL 纹理、待释放纹理或已预解码，跳过
-        if (textures.containsKey(filename) || pendingRelease.containsKey(filename)
+        // 快速检查：已有 GL 纹理、待释放纹理或已预解码，跳过
+        Map<String, Texture> localTextures = textures;
+        if (localTextures == null) return;
+        if (localTextures.containsKey(filename) || pendingRelease.containsKey(filename)
                 || predecodedTextures.containsKey(filename)) {
             return;
         }
@@ -78,7 +81,7 @@ public class MMDTextureManager {
             boolean hasAlpha = localNf.TextureHasAlpha(nfTex);
             
             int texSize = x * y * (hasAlpha ? 4 : 3);
-            ByteBuffer pixelBuffer = ByteBuffer.allocateDirect(texSize);
+            ByteBuffer pixelBuffer = MemoryUtil.memAlloc(texSize);
             localNf.CopyDataToByteBuffer(pixelBuffer, texData, texSize);
             pixelBuffer.rewind();
             
@@ -88,7 +91,11 @@ public class MMDTextureManager {
             predecoded.height = y;
             predecoded.hasAlpha = hasAlpha;
             
-            predecodedTextures.put(filename, predecoded);
+            // 原子放入：并发时只有一个线程成功，失败方释放自己的 buffer 防止泄漏
+            PredecodedTexture existing = predecodedTextures.putIfAbsent(filename, predecoded);
+            if (existing != null) {
+                MemoryUtil.memFree(pixelBuffer);
+            }
         } finally {
             localNf.DeleteTexture(nfTex);
         }
@@ -98,6 +105,13 @@ public class MMDTextureManager {
      * 清除所有预解码数据（在模型重载时调用）
      */
     public static void clearPreloaded() {
+        // 释放所有未消费的预解码缓冲区，防止 native 内存泄漏
+        for (PredecodedTexture p : predecodedTextures.values()) {
+            if (p.pixelData != null) {
+                MemoryUtil.memFree(p.pixelData);
+                p.pixelData = null;
+            }
+        }
         predecodedTextures.clear();
     }
 
@@ -144,15 +158,19 @@ public class MMDTextureManager {
         int tex = GL46C.glGenTextures();
         GL46C.glBindTexture(GL46C.GL_TEXTURE_2D, tex);
         int texSize = x * y * (hasAlpha ? 4 : 3);
-        ByteBuffer texBuffer = ByteBuffer.allocateDirect(texSize);
-        nf.CopyDataToByteBuffer(texBuffer, texData, texSize);
-        texBuffer.rewind();
-        if (hasAlpha) {
-            GL46C.glPixelStorei(GL46C.GL_UNPACK_ALIGNMENT, 4);
-            GL46C.glTexImage2D(GL46C.GL_TEXTURE_2D, 0, GL46C.GL_RGBA, x, y, 0, GL46C.GL_RGBA, GL46C.GL_UNSIGNED_BYTE, texBuffer);
-        } else {
-            GL46C.glPixelStorei(GL46C.GL_UNPACK_ALIGNMENT, 1);
-            GL46C.glTexImage2D(GL46C.GL_TEXTURE_2D, 0, GL46C.GL_RGB, x, y, 0, GL46C.GL_RGB, GL46C.GL_UNSIGNED_BYTE, texBuffer);
+        ByteBuffer texBuffer = MemoryUtil.memAlloc(texSize);
+        try {
+            nf.CopyDataToByteBuffer(texBuffer, texData, texSize);
+            texBuffer.rewind();
+            if (hasAlpha) {
+                GL46C.glPixelStorei(GL46C.GL_UNPACK_ALIGNMENT, 4);
+                GL46C.glTexImage2D(GL46C.GL_TEXTURE_2D, 0, GL46C.GL_RGBA, x, y, 0, GL46C.GL_RGBA, GL46C.GL_UNSIGNED_BYTE, texBuffer);
+            } else {
+                GL46C.glPixelStorei(GL46C.GL_UNPACK_ALIGNMENT, 1);
+                GL46C.glTexImage2D(GL46C.GL_TEXTURE_2D, 0, GL46C.GL_RGB, x, y, 0, GL46C.GL_RGB, GL46C.GL_UNSIGNED_BYTE, texBuffer);
+            }
+        } finally {
+            MemoryUtil.memFree(texBuffer);
         }
         nf.DeleteTexture(nfTex);
 
@@ -193,6 +211,12 @@ public class MMDTextureManager {
         GL46C.glTexParameteri(GL46C.GL_TEXTURE_2D, GL46C.GL_TEXTURE_MAG_FILTER, GL46C.GL_LINEAR);
         GL46C.glBindTexture(GL46C.GL_TEXTURE_2D, 0);
         
+        // GL 上传完成，释放 off-heap 像素缓冲区
+        if (predecoded.pixelData != null) {
+            MemoryUtil.memFree(predecoded.pixelData);
+            predecoded.pixelData = null;
+        }
+        
         Texture result = new Texture();
         result.tex = tex;
         result.hasAlpha = predecoded.hasAlpha;
@@ -221,17 +245,18 @@ public class MMDTextureManager {
      */
     public static void release(String filename) {
         if (filename == null || textures == null) return;
-        Texture tex = textures.get(filename);
-        if (tex == null) return;
-        
-        int remaining = tex.refCount.decrementAndGet();
-        if (remaining <= 0) {
-            tex.refCount.set(0); // 防止意外负数
-            tex.lastReleaseTime = System.currentTimeMillis();
-            textures.remove(filename);
-            pendingRelease.put(filename, tex);
-            logger.debug("纹理引用归零，移入延迟释放队列: {}", filename);
-        }
+        textures.compute(filename, (key, tex) -> {
+            if (tex == null) return null;
+            int remaining = tex.refCount.decrementAndGet();
+            if (remaining <= 0) {
+                tex.refCount.set(0);
+                tex.lastReleaseTime = System.currentTimeMillis();
+                pendingRelease.put(key, tex);
+                logger.debug("纹理引用归零，移入延迟释放队列: {}", key);
+                return null; // 从 textures 中移除
+            }
+            return tex;
+        });
     }
     
     /**

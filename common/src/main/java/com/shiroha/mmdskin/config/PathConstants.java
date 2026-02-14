@@ -281,12 +281,13 @@ public final class PathConstants {
     
     /**
      * 确保目录存在
+     * @return true 表示目录是新创建的，false 表示目录已存在
      */
     public static boolean ensureDirectoryExists(File dir) {
         if (!dir.exists()) {
             return dir.mkdirs();
         }
-        return true;
+        return false;
     }
     
     /**
